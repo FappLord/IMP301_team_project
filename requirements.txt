@@ -1,0 +1,24 @@
+# ==============================================================================
+# IMP302 Final Project: Classical Image Restoration & License Plate Recognition
+# Install all dependencies via: pip install -r requirements.txt
+# ==============================================================================
+
+# Core Numerical & Scientific Computing (2D FFT, Walsh-Hadamard, Radon, Filtering)
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Classical Image & Video Processing (Morphology, Homography, CCL, Video I/O)
+opencv-python>=4.8.0
+scikit-image>=0.21.0
+Pillow>=10.0.0
+
+# Classical Statistical Pattern Recognition (Chapter 12: SVM, k-NN, StandardScaler)
+scikit-learn>=1.3.0
+
+# Visualization & Publication Figures (run_experiments.py)
+matplotlib>=3.7.0
+
+# Academic Report Generation Utilities (build_pdf_report.py & build_word_report.py)
+PyMuPDF>=1.23.0
+python-docx>=1.1.0
+

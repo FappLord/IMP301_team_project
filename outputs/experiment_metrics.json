@@ -1,0 +1,236 @@
+{
+  "num_total_images": 116,
+  "num_labeled_images": 115,
+  "num_extracted_chars": 964,
+  "num_char_classes": 29,
+  "module1_quality_comparison": {
+    "Degraded (Blurry + Noisy)": {
+      "MSE": 199.09,
+      "PSNR": 25.2,
+      "SSIM": 0.692
+    },
+    "Gaussian Filter (5x5)": {
+      "MSE": 159.31,
+      "PSNR": 26.21,
+      "SSIM": 0.8515
+    },
+    "Median Filter (3x3)": {
+      "MSE": 153.72,
+      "PSNR": 26.37,
+      "SSIM": 0.841
+    },
+    "Bilateral Filter": {
+      "MSE": 146.04,
+      "PSNR": 26.6,
+      "SSIM": 0.8545
+    },
+    "Wavelet DWT (BayesShrink)": {
+      "MSE": 156.97,
+      "PSNR": 26.27,
+      "SSIM": 0.8009
+    },
+    "Wiener Deconvolution (FFT)": {
+      "MSE": 134.13,
+      "PSNR": 26.9,
+      "SSIM": 0.8449
+    },
+    "Proposed (DWT + Reg-Wiener)": {
+      "MSE": 104.08,
+      "PSNR": 27.99,
+      "SSIM": 0.7053
+    }
+  },
+  "ablation2_binarization": {
+    "Global Otsu (Normal Lighting)": {
+      "Exact_Segmentation_Count": "108/115",
+      "Segmentation_Rate_Pct": 93.91
+    },
+    "Adaptive Gaussian (Normal Lighting)": {
+      "Exact_Segmentation_Count": "110/115",
+      "Segmentation_Rate_Pct": 95.65
+    },
+    "Global Otsu (Uneven Shadow/Glare)": {
+      "Exact_Segmentation_Count": "106/115",
+      "Segmentation_Rate_Pct": 92.17
+    },
+    "Adaptive Gaussian (Uneven Shadow/Glare)": {
+      "Exact_Segmentation_Count": "109/115",
+      "Segmentation_Rate_Pct": 94.78
+    }
+  },
+  "ablation3_features_classifiers": [
+    {
+      "Feature_Set": "WHT Only (100-d, Slide 4)",
+      "Classifier": "Minimum Distance",
+      "Accuracy_Pct": 75.83,
+      "Precision_Pct": 84.33,
+      "Recall_Pct": 75.83,
+      "F1_Score_Pct": 78.72,
+      "CV_Time_ms": 663.4
+    },
+    {
+      "Feature_Set": "WHT Only (100-d, Slide 4)",
+      "Classifier": "k-NN (k=3)",
+      "Accuracy_Pct": 94.19,
+      "Precision_Pct": 93.84,
+      "Recall_Pct": 94.19,
+      "F1_Score_Pct": 93.72,
+      "CV_Time_ms": 97.0
+    },
+    {
+      "Feature_Set": "WHT Only (100-d, Slide 4)",
+      "Classifier": "Random Forest",
+      "Accuracy_Pct": 93.98,
+      "Precision_Pct": 92.7,
+      "Recall_Pct": 93.98,
+      "F1_Score_Pct": 93.12,
+      "CV_Time_ms": 5751.3
+    },
+    {
+      "Feature_Set": "WHT Only (100-d, Slide 4)",
+      "Classifier": "SVM (RBF Kernel)",
+      "Accuracy_Pct": 95.33,
+      "Precision_Pct": 94.97,
+      "Recall_Pct": 95.33,
+      "F1_Score_Pct": 95.05,
+      "CV_Time_ms": 789.9
+    },
+    {
+      "Feature_Set": "Hu + Topology + Zoning (45-d, Slide 10)",
+      "Classifier": "Minimum Distance",
+      "Accuracy_Pct": 67.63,
+      "Precision_Pct": 80.57,
+      "Recall_Pct": 67.63,
+      "F1_Score_Pct": 71.51,
+      "CV_Time_ms": 23.1
+    },
+    {
+      "Feature_Set": "Hu + Topology + Zoning (45-d, Slide 10)",
+      "Classifier": "k-NN (k=3)",
+      "Accuracy_Pct": 89.11,
+      "Precision_Pct": 87.5,
+      "Recall_Pct": 89.11,
+      "F1_Score_Pct": 87.89,
+      "CV_Time_ms": 75.0
+    },
+    {
+      "Feature_Set": "Hu + Topology + Zoning (45-d, Slide 10)",
+      "Classifier": "Random Forest",
+      "Accuracy_Pct": 90.15,
+      "Precision_Pct": 88.64,
+      "Recall_Pct": 90.15,
+      "F1_Score_Pct": 89.14,
+      "CV_Time_ms": 3888.8
+    },
+    {
+      "Feature_Set": "Hu + Topology + Zoning (45-d, Slide 10)",
+      "Classifier": "SVM (RBF Kernel)",
+      "Accuracy_Pct": 90.87,
+      "Precision_Pct": 90.39,
+      "Recall_Pct": 90.87,
+      "F1_Score_Pct": 90.34,
+      "CV_Time_ms": 994.7
+    },
+    {
+      "Feature_Set": "HOG Only (324-d, Slide 10)",
+      "Classifier": "Minimum Distance",
+      "Accuracy_Pct": 93.57,
+      "Precision_Pct": 95.43,
+      "Recall_Pct": 93.57,
+      "F1_Score_Pct": 94.28,
+      "CV_Time_ms": 43.4
+    },
+    {
+      "Feature_Set": "HOG Only (324-d, Slide 10)",
+      "Classifier": "k-NN (k=3)",
+      "Accuracy_Pct": 96.16,
+      "Precision_Pct": 95.61,
+      "Recall_Pct": 96.16,
+      "F1_Score_Pct": 95.69,
+      "CV_Time_ms": 129.7
+    },
+    {
+      "Feature_Set": "HOG Only (324-d, Slide 10)",
+      "Classifier": "Random Forest",
+      "Accuracy_Pct": 94.19,
+      "Precision_Pct": 92.94,
+      "Recall_Pct": 94.19,
+      "F1_Score_Pct": 93.27,
+      "CV_Time_ms": 7612.8
+    },
+    {
+      "Feature_Set": "HOG Only (324-d, Slide 10)",
+      "Classifier": "SVM (RBF Kernel)",
+      "Accuracy_Pct": 96.37,
+      "Precision_Pct": 95.7,
+      "Recall_Pct": 96.37,
+      "F1_Score_Pct": 95.97,
+      "CV_Time_ms": 1743.1
+    },
+    {
+      "Feature_Set": "Combined (WHT + HOG + Hu/Topo, 469-d)",
+      "Classifier": "Minimum Distance",
+      "Accuracy_Pct": 92.43,
+      "Precision_Pct": 95.05,
+      "Recall_Pct": 92.43,
+      "F1_Score_Pct": 93.36,
+      "CV_Time_ms": 50.7
+    },
+    {
+      "Feature_Set": "Combined (WHT + HOG + Hu/Topo, 469-d)",
+      "Classifier": "k-NN (k=3)",
+      "Accuracy_Pct": 95.54,
+      "Precision_Pct": 94.61,
+      "Recall_Pct": 95.54,
+      "F1_Score_Pct": 94.93,
+      "CV_Time_ms": 160.9
+    },
+    {
+      "Feature_Set": "Combined (WHT + HOG + Hu/Topo, 469-d)",
+      "Classifier": "Random Forest",
+      "Accuracy_Pct": 94.5,
+      "Precision_Pct": 93.0,
+      "Recall_Pct": 94.5,
+      "F1_Score_Pct": 93.47,
+      "CV_Time_ms": 9054.1
+    },
+    {
+      "Feature_Set": "Combined (WHT + HOG + Hu/Topo, 469-d)",
+      "Classifier": "SVM (RBF Kernel)",
+      "Accuracy_Pct": 96.47,
+      "Precision_Pct": 95.68,
+      "Recall_Pct": 96.47,
+      "F1_Score_Pct": 96.02,
+      "CV_Time_ms": 2002.2
+    }
+  ],
+  "ablation1_end_to_end": [
+    {
+      "Condition": "clean",
+      "Avg_PSNR_dB": 100.0,
+      "Avg_SSIM": 1.0,
+      "Detection_Rate_Pct": 100.0,
+      "Exact_Segmentation_Pct": 95.65,
+      "Char_Accuracy_Pct": 96.23,
+      "Full_Plate_Exact_Match_Pct": 92.17
+    },
+    {
+      "Condition": "degraded_no_m1",
+      "Avg_PSNR_dB": 25.42,
+      "Avg_SSIM": 0.7243,
+      "Detection_Rate_Pct": 100.0,
+      "Exact_Segmentation_Pct": 1.74,
+      "Char_Accuracy_Pct": 8.24,
+      "Full_Plate_Exact_Match_Pct": 0.0
+    },
+    {
+      "Condition": "degraded_with_m1",
+      "Avg_PSNR_dB": 28.33,
+      "Avg_SSIM": 0.7331,
+      "Detection_Rate_Pct": 100.0,
+      "Exact_Segmentation_Pct": 87.83,
+      "Char_Accuracy_Pct": 93.84,
+      "Full_Plate_Exact_Match_Pct": 84.35
+    }
+  ]
+}

@@ -1,0 +1,604 @@
+{
+  "total_labeled_plates": 115,
+  "expanded_multiplier": 6,
+  "total_expanded_plates": 690,
+  "degradation_types": [
+    "clean",
+    "awgn",
+    "salt_pepper",
+    "rayleigh",
+    "periodic",
+    "motion_blur"
+  ],
+  "counts": {
+    "train_clean": 80,
+    "val_clean": 17,
+    "test_clean": 18,
+    "train_expanded": 480,
+    "val_expanded": 102,
+    "test_expanded": 108
+  },
+  "splits": {
+    "train": [
+      {
+        "base": "0000_02187_b",
+        "gt_label": "59E121500",
+        "img_path": "dataset\\img\\0000_02187_b.jpg"
+      },
+      {
+        "base": "0000_06886_b",
+        "gt_label": "59C165331",
+        "img_path": "dataset\\img\\0000_06886_b.jpg"
+      },
+      {
+        "base": "0001_05318_b",
+        "gt_label": "59T108264",
+        "img_path": "dataset\\img\\0001_05318_b.jpg"
+      },
+      {
+        "base": "0002_02183_b",
+        "gt_label": "52U78693",
+        "img_path": "dataset\\img\\0002_02183_b.jpg"
+      },
+      {
+        "base": "0003_02063_b",
+        "gt_label": "63B957926",
+        "img_path": "dataset\\img\\0003_02063_b.jpg"
+      },
+      {
+        "base": "0003_07398_b",
+        "gt_label": "59V107473",
+        "img_path": "dataset\\img\\0003_07398_b.jpg"
+      },
+      {
+        "base": "0005_00490_b",
+        "gt_label": "59F113860",
+        "img_path": "dataset\\img\\0005_00490_b.jpg"
+      },
+      {
+        "base": "0005_00512_b",
+        "gt_label": "68F55727",
+        "img_path": "dataset\\img\\0005_00512_b.jpg"
+      },
+      {
+        "base": "0005_02171_b",
+        "gt_label": "59C251109",
+        "img_path": "dataset\\img\\0005_02171_b.jpg"
+      },
+      {
+        "base": "0006_05286_b",
+        "gt_label": "59C165331",
+        "img_path": "dataset\\img\\0006_05286_b.jpg"
+      },
+      {
+        "base": "0006_06797_b",
+        "gt_label": "59C165331",
+        "img_path": "dataset\\img\\0006_06797_b.jpg"
+      },
+      {
+        "base": "0007_02188_b",
+        "gt_label": "60B555723",
+        "img_path": "dataset\\img\\0007_02188_b.jpg"
+      },
+      {
+        "base": "0007_05159_b",
+        "gt_label": "37M107918",
+        "img_path": "dataset\\img\\0007_05159_b.jpg"
+      },
+      {
+        "base": "0009_02194_b",
+        "gt_label": "51FB4779",
+        "img_path": "dataset\\img\\0009_02194_b.jpg"
+      },
+      {
+        "base": "0010_02063_b",
+        "gt_label": "63B957926",
+        "img_path": "dataset\\img\\0010_02063_b.jpg"
+      },
+      {
+        "base": "0011_00515_b",
+        "gt_label": "60X46482",
+        "img_path": "dataset\\img\\0011_00515_b.jpg"
+      },
+      {
+        "base": "0012_04539_b",
+        "gt_label": "37M107918",
+        "img_path": "dataset\\img\\0012_04539_b.jpg"
+      },
+      {
+        "base": "0014_02176_b",
+        "gt_label": "52D44702",
+        "img_path": "dataset\\img\\0014_02176_b.jpg"
+      },
+      {
+        "base": "0017_00195_b",
+        "gt_label": "59M190977",
+        "img_path": "dataset\\img\\0017_00195_b.jpg"
+      },
+      {
+        "base": "0019_01137_b",
+        "gt_label": "59V184031",
+        "img_path": "dataset\\img\\0019_01137_b.jpg"
+      },
+      {
+        "base": "0019_02163_b",
+        "gt_label": "59E113417",
+        "img_path": "dataset\\img\\0019_02163_b.jpg"
+      },
+      {
+        "base": "0020_07156_b",
+        "gt_label": "59N169575",
+        "img_path": "dataset\\img\\0020_07156_b.jpg"
+      },
+      {
+        "base": "0027_06458_b",
+        "gt_label": "85F100417",
+        "img_path": "dataset\\img\\0027_06458_b.jpg"
+      },
+      {
+        "base": "0038_08198_b",
+        "gt_label": "59K190300",
+        "img_path": "dataset\\img\\0038_08198_b.jpg"
+      },
+      {
+        "base": "0039_05169_b",
+        "gt_label": "84G122593",
+        "img_path": "dataset\\img\\0039_05169_b.jpg"
+      },
+      {
+        "base": "0041_00436_b",
+        "gt_label": "59M103519",
+        "img_path": "dataset\\img\\0041_00436_b.jpg"
+      },
+      {
+        "base": "0041_00697_b",
+        "gt_label": "54Z87524",
+        "img_path": "dataset\\img\\0041_00697_b.jpg"
+      },
+      {
+        "base": "0041_04542_b",
+        "gt_label": "52H99892",
+        "img_path": "dataset\\img\\0041_04542_b.jpg"
+      },
+      {
+        "base": "0042_01875_b",
+        "gt_label": "59C162293",
+        "img_path": "dataset\\img\\0042_01875_b.jpg"
+      },
+      {
+        "base": "0042_05741_b",
+        "gt_label": "59U139619",
+        "img_path": "dataset\\img\\0042_05741_b.jpg"
+      },
+      {
+        "base": "0043_01757_b",
+        "gt_label": "65F131532",
+        "img_path": "dataset\\img\\0043_01757_b.jpg"
+      },
+      {
+        "base": "0044_04330_b",
+        "gt_label": "84K34900",
+        "img_path": "dataset\\img\\0044_04330_b.jpg"
+      },
+      {
+        "base": "0045_01558_b",
+        "gt_label": "59U170392",
+        "img_path": "dataset\\img\\0045_01558_b.jpg"
+      },
+      {
+        "base": "0045_01821_b",
+        "gt_label": "49B131215",
+        "img_path": "dataset\\img\\0045_01821_b.jpg"
+      },
+      {
+        "base": "0046_01762_b",
+        "gt_label": "54L24264",
+        "img_path": "dataset\\img\\0046_01762_b.jpg"
+      },
+      {
+        "base": "0047_00717_b",
+        "gt_label": "54U52813",
+        "img_path": "dataset\\img\\0047_00717_b.jpg"
+      },
+      {
+        "base": "0047_00966_b",
+        "gt_label": "54S16312",
+        "img_path": "dataset\\img\\0047_00966_b.jpg"
+      },
+      {
+        "base": "0047_00970_b",
+        "gt_label": "59P152934",
+        "img_path": "dataset\\img\\0047_00970_b.jpg"
+      },
+      {
+        "base": "0047_03046_b",
+        "gt_label": "54V25804",
+        "img_path": "dataset\\img\\0047_03046_b.jpg"
+      },
+      {
+        "base": "0048_01264_b",
+        "gt_label": "59G198907",
+        "img_path": "dataset\\img\\0048_01264_b.jpg"
+      },
+      {
+        "base": "0048_01752_b",
+        "gt_label": "59L197457",
+        "img_path": "dataset\\img\\0048_01752_b.jpg"
+      },
+      {
+        "base": "0048_02005_b",
+        "gt_label": "86B341492",
+        "img_path": "dataset\\img\\0048_02005_b.jpg"
+      },
+      {
+        "base": "0049_03047_b",
+        "gt_label": "94H41831",
+        "img_path": "dataset\\img\\0049_03047_b.jpg"
+      },
+      {
+        "base": "0049_04676_b",
+        "gt_label": "59P141828",
+        "img_path": "dataset\\img\\0049_04676_b.jpg"
+      },
+      {
+        "base": "0051_00959_b",
+        "gt_label": "59V216023",
+        "img_path": "dataset\\img\\0051_00959_b.jpg"
+      },
+      {
+        "base": "0051_01757_b",
+        "gt_label": "65F131532",
+        "img_path": "dataset\\img\\0051_01757_b.jpg"
+      },
+      {
+        "base": "0053_04375_b",
+        "gt_label": "67B181846",
+        "img_path": "dataset\\img\\0053_04375_b.jpg"
+      },
+      {
+        "base": "0054_05482_b",
+        "gt_label": "59S216555",
+        "img_path": "dataset\\img\\0054_05482_b.jpg"
+      },
+      {
+        "base": "0054_06642_b",
+        "gt_label": "84G122593",
+        "img_path": "dataset\\img\\0054_06642_b.jpg"
+      },
+      {
+        "base": "0054_06669_b",
+        "gt_label": "59C159610",
+        "img_path": "dataset\\img\\0054_06669_b.jpg"
+      },
+      {
+        "base": "011",
+        "gt_label": "59X154497",
+        "img_path": "dataset\\img\\011.jpg"
+      },
+      {
+        "base": "013",
+        "gt_label": "59S235205",
+        "img_path": "dataset\\img\\013.jpg"
+      },
+      {
+        "base": "018",
+        "gt_label": "60B801075",
+        "img_path": "dataset\\img\\018.jpg"
+      },
+      {
+        "base": "019",
+        "gt_label": "59F149271",
+        "img_path": "dataset\\img\\019.jpg"
+      },
+      {
+        "base": "020",
+        "gt_label": "59S208082",
+        "img_path": "dataset\\img\\020.jpg"
+      },
+      {
+        "base": "021",
+        "gt_label": "59S131386",
+        "img_path": "dataset\\img\\021.jpg"
+      },
+      {
+        "base": "022",
+        "gt_label": "59E164239",
+        "img_path": "dataset\\img\\022.jpg"
+      },
+      {
+        "base": "024",
+        "gt_label": "59P133202",
+        "img_path": "dataset\\img\\024.jpg"
+      },
+      {
+        "base": "026",
+        "gt_label": "54S22148",
+        "img_path": "dataset\\img\\026.jpg"
+      },
+      {
+        "base": "031",
+        "gt_label": "59F129346",
+        "img_path": "dataset\\img\\031.jpg"
+      },
+      {
+        "base": "033",
+        "gt_label": "59L227560",
+        "img_path": "dataset\\img\\033.jpg"
+      },
+      {
+        "base": "04",
+        "gt_label": "86B319858",
+        "img_path": "dataset\\img\\04.jpg"
+      },
+      {
+        "base": "040",
+        "gt_label": "59B100002",
+        "img_path": "dataset\\img\\040.jpg"
+      },
+      {
+        "base": "045",
+        "gt_label": "59Y144665",
+        "img_path": "dataset\\img\\045.jpg"
+      },
+      {
+        "base": "047",
+        "gt_label": "59H155699",
+        "img_path": "dataset\\img\\047.jpg"
+      },
+      {
+        "base": "05",
+        "gt_label": "85D121869",
+        "img_path": "dataset\\img\\05.jpg"
+      },
+      {
+        "base": "051",
+        "gt_label": "59U135226",
+        "img_path": "dataset\\img\\051.jpg"
+      },
+      {
+        "base": "052",
+        "gt_label": "75K30899",
+        "img_path": "dataset\\img\\052.jpg"
+      },
+      {
+        "base": "056",
+        "gt_label": "85D101611",
+        "img_path": "dataset\\img\\056.jpg"
+      },
+      {
+        "base": "057",
+        "gt_label": "72C136087",
+        "img_path": "dataset\\img\\057.jpg"
+      },
+      {
+        "base": "058",
+        "gt_label": "52Z79752",
+        "img_path": "dataset\\img\\058.jpg"
+      },
+      {
+        "base": "06",
+        "gt_label": "71S35011",
+        "img_path": "dataset\\img\\06.jpg"
+      },
+      {
+        "base": "060",
+        "gt_label": "59N187515",
+        "img_path": "dataset\\img\\060.jpg"
+      },
+      {
+        "base": "061",
+        "gt_label": "66P15739",
+        "img_path": "dataset\\img\\061.jpg"
+      },
+      {
+        "base": "062",
+        "gt_label": "47B142872",
+        "img_path": "dataset\\img\\062.jpg"
+      },
+      {
+        "base": "064",
+        "gt_label": "59D166974",
+        "img_path": "dataset\\img\\064.jpg"
+      },
+      {
+        "base": "065",
+        "gt_label": "59H146704",
+        "img_path": "dataset\\img\\065.jpg"
+      },
+      {
+        "base": "067",
+        "gt_label": "59C211894",
+        "img_path": "dataset\\img\\067.jpg"
+      },
+      {
+        "base": "07",
+        "gt_label": "60B813705",
+        "img_path": "dataset\\img\\07.jpg"
+      },
+      {
+        "base": "08",
+        "gt_label": "59H133046",
+        "img_path": "dataset\\img\\08.jpg"
+      }
+    ],
+    "val": [
+      {
+        "base": "0006_06035_b",
+        "gt_label": "59U139619",
+        "img_path": "dataset\\img\\0006_06035_b.jpg"
+      },
+      {
+        "base": "0018_07248_b",
+        "gt_label": "77F130541",
+        "img_path": "dataset\\img\\0018_07248_b.jpg"
+      },
+      {
+        "base": "0020_02063_b",
+        "gt_label": "63B957926",
+        "img_path": "dataset\\img\\0020_02063_b.jpg"
+      },
+      {
+        "base": "0023_05798_b",
+        "gt_label": "67B181846",
+        "img_path": "dataset\\img\\0023_05798_b.jpg"
+      },
+      {
+        "base": "0028_07031_b",
+        "gt_label": "59V200285",
+        "img_path": "dataset\\img\\0028_07031_b.jpg"
+      },
+      {
+        "base": "0031_07285_b",
+        "gt_label": "81B126810",
+        "img_path": "dataset\\img\\0031_07285_b.jpg"
+      },
+      {
+        "base": "0036_00507_b",
+        "gt_label": "72C112511",
+        "img_path": "dataset\\img\\0036_00507_b.jpg"
+      },
+      {
+        "base": "0038_01762_b",
+        "gt_label": "54L24264",
+        "img_path": "dataset\\img\\0038_01762_b.jpg"
+      },
+      {
+        "base": "0041_00486_b",
+        "gt_label": "68H74213",
+        "img_path": "dataset\\img\\0041_00486_b.jpg"
+      },
+      {
+        "base": "0041_00507_b",
+        "gt_label": "72C112511",
+        "img_path": "dataset\\img\\0041_00507_b.jpg"
+      },
+      {
+        "base": "0041_05679_b",
+        "gt_label": "68H74213",
+        "img_path": "dataset\\img\\0041_05679_b.jpg"
+      },
+      {
+        "base": "0043_01133_b",
+        "gt_label": "54S24522",
+        "img_path": "dataset\\img\\0043_01133_b.jpg"
+      },
+      {
+        "base": "0046_06635_b",
+        "gt_label": "59B135199",
+        "img_path": "dataset\\img\\0046_06635_b.jpg"
+      },
+      {
+        "base": "0049_04098_b",
+        "gt_label": "60B157122",
+        "img_path": "dataset\\img\\0049_04098_b.jpg"
+      },
+      {
+        "base": "0052_05252_b",
+        "gt_label": "59L187760",
+        "img_path": "dataset\\img\\0052_05252_b.jpg"
+      },
+      {
+        "base": "059",
+        "gt_label": "72F120741",
+        "img_path": "dataset\\img\\059.jpg"
+      },
+      {
+        "base": "068",
+        "gt_label": "59B131149",
+        "img_path": "dataset\\img\\068.jpg"
+      }
+    ],
+    "test": [
+      {
+        "base": "0000_05696_b",
+        "gt_label": "59L206377",
+        "img_path": "dataset\\img\\0000_05696_b.jpg"
+      },
+      {
+        "base": "0002_02554_b",
+        "gt_label": "59F168955",
+        "img_path": "dataset\\img\\0002_02554_b.jpg"
+      },
+      {
+        "base": "0009_05325_b",
+        "gt_label": "60B531402",
+        "img_path": "dataset\\img\\0009_05325_b.jpg"
+      },
+      {
+        "base": "0013_05647_b",
+        "gt_label": "59F116711",
+        "img_path": "dataset\\img\\0013_05647_b.jpg"
+      },
+      {
+        "base": "0020_00536_b",
+        "gt_label": "67C105355",
+        "img_path": "dataset\\img\\0020_00536_b.jpg"
+      },
+      {
+        "base": "0025_00457_b",
+        "gt_label": "59B134917",
+        "img_path": "dataset\\img\\0025_00457_b.jpg"
+      },
+      {
+        "base": "0039_04131_b",
+        "gt_label": "59K190300",
+        "img_path": "dataset\\img\\0039_04131_b.jpg"
+      },
+      {
+        "base": "0046_06241_b",
+        "gt_label": "59C165331",
+        "img_path": "dataset\\img\\0046_06241_b.jpg"
+      },
+      {
+        "base": "0047_01868_b",
+        "gt_label": "51L41138",
+        "img_path": "dataset\\img\\0047_01868_b.jpg"
+      },
+      {
+        "base": "0053_01877_b",
+        "gt_label": "59X268327",
+        "img_path": "dataset\\img\\0053_01877_b.jpg"
+      },
+      {
+        "base": "0054_05705_b",
+        "gt_label": "51L73998",
+        "img_path": "dataset\\img\\0054_05705_b.jpg"
+      },
+      {
+        "base": "0055_01981_b",
+        "gt_label": "52P50334",
+        "img_path": "dataset\\img\\0055_01981_b.jpg"
+      },
+      {
+        "base": "023",
+        "gt_label": "59H119374",
+        "img_path": "dataset\\img\\023.jpg"
+      },
+      {
+        "base": "036",
+        "gt_label": "59G133671",
+        "img_path": "dataset\\img\\036.jpg"
+      },
+      {
+        "base": "038",
+        "gt_label": "60B734176",
+        "img_path": "dataset\\img\\038.jpg"
+      },
+      {
+        "base": "043",
+        "gt_label": "54S89169",
+        "img_path": "dataset\\img\\043.jpg"
+      },
+      {
+        "base": "063",
+        "gt_label": "54S55036",
+        "img_path": "dataset\\img\\063.jpg"
+      },
+      {
+        "base": "066",
+        "gt_label": "54U57001",
+        "img_path": "dataset\\img\\066.jpg"
+      }
+    ]
+  }
+}

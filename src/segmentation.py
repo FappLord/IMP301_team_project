@@ -182,15 +182,22 @@ def segment_characters(plate_bgr: np.ndarray, method: str = "adaptive") -> tuple
     binary[:, :6] = 0
     binary[:, -6:] = 0
     
+    def _max_run(arr_1d: np.ndarray) -> int:
+        vals = (arr_1d > 0).astype(np.int32)
+        diffs = np.diff(np.concatenate(([0], vals, [0])))
+        starts = np.where(diffs == 1)[0]
+        ends = np.where(diffs == -1)[0]
+        return int(np.max(ends - starts)) if len(starts) > 0 else 0
+
     for r in list(range(7, 15)) + list(range(H - 15, H - 7)):
-        if np.mean(binary[r, :] > 0) > 0.40:
+        if np.mean(binary[r, :] > 0) > 0.65 or _max_run(binary[r, :]) > 42:
             binary[r, :] = 0
     for c in list(range(6, 13)) + list(range(W - 13, W - 6)):
-        if np.mean(binary[:, c] > 0) > 0.40:
+        if np.mean(binary[:, c] > 0) > 0.65 or _max_run(binary[:, c]) > 55:
             binary[:, c] = 0
 
     clean_bin = binary.copy()
-    for margin_step in [(9, 10), (11, 12), (13, 14)]:
+    for margin_step in [(8, 9), (9, 10), (10, 11)]:
         mx, my = margin_step
         num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(clean_bin, connectivity=8)
         changed = False
@@ -201,16 +208,16 @@ def segment_characters(plate_bgr: np.ndarray, method: str = "adaptive") -> tuple
             bh = stats[lbl, cv2.CC_STAT_HEIGHT]
             if bw > 42 or bh > 63:
                 mask = labels == lbl
-                if by <= my:
+                if by <= 8:
                     clean_bin[:my+1, :][mask[:my+1, :]] = 0
                     changed = True
-                if by + bh >= H - my:
+                if by + bh >= H - 8:
                     clean_bin[H-my-1:, :][mask[H-my-1:, :]] = 0
                     changed = True
-                if bx <= mx:
+                if bx <= 7:
                     clean_bin[:, :mx+1][mask[:, :mx+1]] = 0
                     changed = True
-                if bx + bw >= W - mx:
+                if bx + bw >= W - 7:
                     clean_bin[:, W-mx-1:][mask[:, W-mx-1:]] = 0
                     changed = True
                 if by < 55 and by + bh > 72:
@@ -230,6 +237,14 @@ def segment_characters(plate_bgr: np.ndarray, method: str = "adaptive") -> tuple
             clean_bin[labels == lbl] = 0
             continue
         if (bx <= 8 or bx + bw >= W - 8) and (area < 190 or bw <= 9 or bh > 56):
+            clean_bin[labels == lbl] = 0
+            continue
+        # Reject thin diagonal sticker/border lines (e.g. 'VIE' flag divider with tiny area/bbox extent)
+        if bw >= 12 and (area / float(bw * bh + 1e-5)) < 0.22:
+            clean_bin[labels == lbl] = 0
+            continue
+        # Reject narrow vertical border streaks on the far right/left of the 4-char top row
+        if by < 55 and (bx <= 11 or bx + bw >= W - 15) and bw <= 12 and (area / float(bh + 1e-5)) < 4.5:
             clean_bin[labels == lbl] = 0
             continue
 
@@ -279,8 +294,11 @@ def segment_characters(plate_bgr: np.ndarray, method: str = "adaptive") -> tuple
         scored = []
         for b in row:
             bx, by, bw, bh, cx, cy, lbl = b
-            edge_pen = 25.0 if (bx <= 9 or bx + bw >= W - 9) else 0.0
-            dist = abs(by - med_y) * 1.2 + abs(bh - med_h) * 1.5 + edge_pen
+            if max_chars == 4:
+                edge_pen = 35.0 if (bx <= 13 or bx + bw >= W - 15) else 0.0
+            else:
+                edge_pen = 25.0 if (bx <= 5 or bx + bw >= W - 4 or (bx <= 14 and bw <= 11)) else 0.0
+            dist = abs(by - med_y) * 1.4 + abs(bh - med_h) * 1.6 + edge_pen
             scored.append((dist, b))
         scored.sort(key=lambda x: x[0])
         kept = [x[1] for x in scored[:max_chars]]

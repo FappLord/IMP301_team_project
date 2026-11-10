@@ -31,7 +31,7 @@ from .restoration import (
     full_restoration_pipeline,
     evaluate_quality,
 )
-from .detection import detect_license_plate, deskew_and_crop_plate
+from .detection import detect_license_plate, detect_all_license_plates, deskew_and_crop_plate
 from .segmentation import segment_characters
 from .recognition import ClassicalCharRecognizer, format_vietnamese_plate
 
@@ -365,24 +365,48 @@ class LicensePlatePipeline:
             result["plate_str"] = ""
             result["formatted_plate"] = "N/A"
             result["char_items"] = []
+            result["all_plates"] = []
             return result
             
-        score, bbox, cnt = det_res
-        plate_bgr, skew_angle = deskew_and_crop_plate(proc_img, bbox, cnt, interp_mode=interp_mode)
+        all_det = detect_all_license_plates(proc_img, max_plates=4)
+        if not all_det:
+            all_det = [det_res]
+
+        all_plates = []
+        for idx_p, (sc_p, bb_p, cnt_p) in enumerate(all_det):
+            p_bgr, p_angle = deskew_and_crop_plate(proc_img, bb_p, cnt_p, interp_mode=interp_mode)
+            c_items, s_dbg = segment_characters(p_bgr, method=binarize_method)
+            p_str, c_preds = self.recognizer.predict_chars(c_items, apply_syntax=apply_syntax)
+            # Keep primary candidate or any secondary candidate that segments into a valid 8-9 char plate
+            if idx_p == 0 or len(c_items) in (8, 9):
+                all_plates.append({
+                    "bbox": bb_p,
+                    "det_score": sc_p,
+                    "skew_angle": p_angle,
+                    "plate_bgr": p_bgr,
+                    "char_items": c_items,
+                    "segmentation_debug": s_dbg,
+                    "plate_str": p_str,
+                    "formatted_plate": format_vietnamese_plate(p_str),
+                    "char_preds": c_preds,
+                })
+
+        # Sort valid 8-9 character plates strictly from LEFT to RIGHT (bbox[0])
+        valid_plates = sorted(
+            [p for p in all_plates if len(p["char_items"]) in (8, 9)],
+            key=lambda p: p["bbox"][0],
+        )
+        primary = valid_plates[0] if valid_plates else all_plates[0]
+
         result["detected"] = True
-        result["bbox"] = bbox
-        result["det_score"] = score
-        result["skew_angle"] = skew_angle
-        result["plate_bgr"] = plate_bgr
-        
-        # Stage 3: Binarization (Otsu / K-Means / Adaptive) & 8-Connected Component Segmentation (Chapters 1, 9)
-        char_items, seg_debug = segment_characters(plate_bgr, method=binarize_method)
-        result["char_items"] = char_items
-        result["segmentation_debug"] = seg_debug
-        
-        # Stage 4: Feature Extraction & Pattern Classification (Chapters 4, 10, 12)
-        plate_str, char_preds = self.recognizer.predict_chars(char_items, apply_syntax=apply_syntax)
-        result["plate_str"] = plate_str
-        result["formatted_plate"] = format_vietnamese_plate(plate_str)
-        result["char_preds"] = char_preds
+        result["bbox"] = primary["bbox"]
+        result["det_score"] = primary["det_score"]
+        result["skew_angle"] = primary["skew_angle"]
+        result["plate_bgr"] = primary["plate_bgr"]
+        result["char_items"] = primary["char_items"]
+        result["segmentation_debug"] = primary["segmentation_debug"]
+        result["plate_str"] = primary["plate_str"]
+        result["formatted_plate"] = primary["formatted_plate"]
+        result["char_preds"] = primary["char_preds"]
+        result["all_plates"] = valid_plates if valid_plates else [primary]
         return result

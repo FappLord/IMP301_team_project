@@ -562,8 +562,46 @@ class ClassicalCharRecognizer:
             return comb
         raise ValueError(f"Unknown feature_mode: {self.feature_mode}")
 
-    def fit(self, char_items: list[dict], labels: list[str]):
-        blocks = self.extract_raw_feature_blocks(char_items)
+    def fit(self, char_items: list[dict], labels: list[str], augment_missing_letters: bool = True):
+        train_items = list(char_items)
+        train_labels = list(labels)
+        if augment_missing_letters:
+            from collections import Counter
+            counts = Counter(train_labels)
+            # Standard Vietnamese license plate series letters (includes A, R absent from the 115-plate dataset)
+            vn_letters = ("A", "B", "C", "D", "E", "F", "G", "H", "K", "L", "M", "N", "P", "R", "S", "T", "U", "V", "X", "Y", "Z")
+            missing = tuple(ch for ch in vn_letters if counts[ch] == 0)
+            if missing:
+                syn_items, syn_labels = generate_synthetic_vietnamese_letters(missing, samples_per_letter=16)
+                train_items.extend(syn_items)
+                train_labels.extend(syn_labels)
+
+            # Balance rare letter classes (1 <= count < 14, e.g. 'D' which only has 3 samples vs 'B' with 12)
+            # using affine jitter on real dataset patches + synthetic prototypes so 5-fold SVM Platt scaling is unbiased
+            rng = np.random.default_rng(42)
+            for ch in vn_letters:
+                if 0 < counts[ch] < 14:
+                    real_ch_items = [it for it, lb in zip(char_items, labels) if lb == ch]
+                    needed = 14 - counts[ch]
+                    for k_aug in range(needed):
+                        base_it = real_ch_items[k_aug % len(real_ch_items)]
+                        ang = float(rng.uniform(-4.0, 4.0))
+                        tx = float(rng.uniform(-1.0, 1.0))
+                        ty = float(rng.uniform(-1.0, 1.0))
+                        M = cv2.getRotationMatrix2D((16.0, 16.0), ang, float(rng.uniform(0.95, 1.05)))
+                        M[0, 2] += tx
+                        M[1, 2] += ty
+                        b32 = cv2.warpAffine(base_it["bin_32"], M, (32, 32), flags=cv2.INTER_NEAREST, borderValue=0)
+                        a32 = cv2.warpAffine(base_it["area_32"], M, (32, 32), flags=cv2.INTER_LINEAR, borderValue=0)
+                        g32 = cv2.warpAffine(base_it["gray_32"], M, (32, 32), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+                        train_items.append({**base_it, "bin_32": b32, "area_32": a32, "gray_32": g32})
+                        train_labels.append(ch)
+                    if ch == "D":
+                        syn_d, syn_d_lbl = generate_synthetic_vietnamese_letters(("D",), samples_per_letter=8, seed=99)
+                        train_items.extend(syn_d)
+                        train_labels.extend(syn_d_lbl)
+
+        blocks = self.extract_raw_feature_blocks(train_items)
         X = self.prepare_features(
             blocks["wht"],
             blocks["hog"],
@@ -572,7 +610,7 @@ class ClassicalCharRecognizer:
             X_dct=blocks["dct"],
             X_dht=blocks["dht"],
         )
-        y = np.array(labels)
+        y = np.array(train_labels)
         self.classes_ = np.unique(y)
         self.clf.fit(X, y)
         return self
@@ -625,12 +663,126 @@ class ClassicalCharRecognizer:
                     elif idx == 2:
                         if not is_alpha:
                             prob_vec[c_i] *= 1e-4
+                    elif idx == 3 and len(preds) >= 3 and preds[2][0] == "A":
+                        # Vietnamese <50cc motorbike plates with series 'A' always use 2-letter code (AA, AB, AC...)
+                        if not is_alpha:
+                            prob_vec[c_i] *= 1e-4
+
+            # Chapter 10 Topological & Boundary Disambiguation for 'D' vs 'B', 'E' vs 'C', and '7' vs '1':
+            topo = compute_topology_details(item["bin_32"])
+            if "B" in classes and "D" in classes:
+                i_b, i_d = classes.index("B"), classes.index("D")
+                if max(prob_vec[i_b], prob_vec[i_d]) >= 0.05:
+                    waist_bar = float(np.mean(item["bin_32"][14:19, 14:19] > 0))
+                    if waist_bar < 0.26 and topo["num_holes"] <= 1:
+                        prob_vec[i_d] *= 2.8
+                        prob_vec[i_b] *= 0.25
+                    elif waist_bar > 0.42 or topo["num_holes"] >= 2:
+                        prob_vec[i_b] *= 1.8
+                        prob_vec[i_d] *= 0.30
+
+            if "C" in classes and "E" in classes and idx == 2:
+                i_c, i_e = classes.index("C"), classes.index("E")
+                if max(prob_vec[i_c], prob_vec[i_e]) >= 0.05 and topo["num_holes"] == 0:
+                    mid_tongue = float(np.mean(item["bin_32"][13:19, 11:22] > 0))
+                    if mid_tongue > 0.34:
+                        prob_vec[i_e] *= 2.6
+                        prob_vec[i_c] *= 0.30
+
+            if "1" in classes and "7" in classes and (idx != 2):
+                i_1, i_7 = classes.index("1"), classes.index("7")
+                if max(prob_vec[i_1], prob_vec[i_7]) >= 0.22:
+                    top_xs = np.where(np.any(item["bin_32"][2:8, :] > 0, axis=0))[0]
+                    mid_ws = [np.sum(item["bin_32"][r, :] > 0) for r in range(12, 25) if np.sum(item["bin_32"][r, :] > 0) > 0]
+                    w_top = float(top_xs[-1] - top_xs[0] + 1) if len(top_xs) > 0 else 0.0
+                    w_mid = float(np.median(mid_ws)) if mid_ws else 1.0
+                    if w_top >= 11.0 and (w_top / (w_mid + 1e-5)) >= 2.25:
+                        prob_vec[i_7] = max(prob_vec[i_7] * 3.0, prob_vec[i_1] * 1.35)
+                        prob_vec[i_1] *= 0.25
             best_i = int(np.argmax(prob_vec))
             conf = float(prob_vec[best_i] / (np.sum(prob_vec) + 1e-8))
             preds.append((classes[best_i], conf))
             
         plate_str = "".join(ch for ch, _ in preds)
         return plate_str, preds
+
+
+def generate_synthetic_vietnamese_letters(
+    letters: tuple[str, ...] = ("A", "R"),
+    samples_per_letter: int = 20,
+    seed: int = 42,
+) -> tuple[list[dict], list[str]]:
+    """
+    Generate synthetic 32x32 character items (bin_32, area_32, gray_32) for Vietnamese license plate
+    uppercase letters that are absent in the 115-plate dataset (such as 'A' and 'R').
+    Uses condensed Vietnamese DIN-style geometry (width ~19-22, height ~42-48 before padding).
+    """
+    rng = np.random.default_rng(seed)
+    items = []
+    labels = []
+    for ch in letters:
+        for i in range(samples_per_letter):
+            bh = int(rng.integers(42, 49))
+            bw = int(rng.integers(18, 23))
+            canvas = np.zeros((bh, bw), dtype=np.uint8)
+            stroke = int(rng.choice([4, 5, 6, 7]))
+            
+            if ch == "A":
+                top_w = int(rng.integers(3, 8))
+                cx = bw // 2 + int(rng.integers(-1, 2))
+                bar_y = int(bh * rng.uniform(0.60, 0.76))
+                pts_left = np.array([[cx - top_w // 2, 2], [2, bh - 2]], dtype=np.int32)
+                pts_right = np.array([[cx + top_w // 2, 2], [bw - 3, bh - 2]], dtype=np.int32)
+                cv2.line(canvas, tuple(pts_left[0]), tuple(pts_left[1]), 255, stroke, cv2.LINE_AA)
+                cv2.line(canvas, tuple(pts_right[0]), tuple(pts_right[1]), 255, stroke, cv2.LINE_AA)
+                cv2.line(canvas, (2, bar_y), (bw - 3, bar_y), 255, max(3, stroke - 1), cv2.LINE_AA)
+                apex_fill = int(bh * rng.uniform(0.22, 0.52))
+                cv2.fillPoly(
+                    canvas,
+                    [np.array([[cx - top_w // 2, 2], [cx + top_w // 2, 2], [bw // 2 + 4, apex_fill], [bw // 2 - 4, apex_fill]])],
+                    255,
+                )
+            else:
+                tmp = np.zeros((64, 64), dtype=np.uint8)
+                font = cv2.FONT_HERSHEY_SIMPLEX if i % 2 == 0 else cv2.FONT_HERSHEY_DUPLEX
+                cv2.putText(tmp, ch, (8, 52), font, 1.8, 255, stroke + 1, cv2.LINE_AA)
+                ys, xs = np.nonzero(tmp > 40)
+                if len(xs) > 0:
+                    crop = tmp[ys.min():ys.max()+1, xs.min():xs.max()+1]
+                    canvas = cv2.resize(crop, (bw, bh), interpolation=cv2.INTER_AREA)
+
+            angle = float(rng.uniform(-5.0, 5.0))
+            M = cv2.getRotationMatrix2D((bw / 2.0, bh / 2.0), angle, 1.0)
+            warped_bin = cv2.warpAffine(canvas, M, (bw, bh), flags=cv2.INTER_LINEAR, borderValue=0)
+            _, p_bin = cv2.threshold(warped_bin, 110, 255, cv2.THRESH_BINARY)
+
+            bg_val = float(rng.uniform(195.0, 248.0))
+            fg_val = float(rng.uniform(25.0, 85.0))
+            alpha = (warped_bin.astype(np.float32) / 255.0)
+            p_gray = (bg_val * (1.0 - alpha) + fg_val * alpha)
+            p_gray = cv2.GaussianBlur(p_gray, (3, 3), rng.uniform(0.5, 1.1))
+            p_gray = np.clip(p_gray + rng.normal(0, 4.0, p_gray.shape), 0, 255).astype(np.uint8)
+
+            pad_x = max(2, (bh - bw) // 3) if bw < bh * 0.45 else 2
+            bin_pad = cv2.copyMakeBorder(p_bin, 2, 2, pad_x, pad_x, cv2.BORDER_CONSTANT, value=0)
+            gray_pad = cv2.copyMakeBorder(p_gray, 2, 2, pad_x, pad_x, cv2.BORDER_REPLICATE)
+
+            bin_32 = cv2.resize(bin_pad, (32, 32), interpolation=cv2.INTER_NEAREST)
+            area_32 = cv2.resize(bin_pad, (32, 32), interpolation=cv2.INTER_AREA)
+            gray_32 = cv2.resize(gray_pad, (32, 32), interpolation=cv2.INTER_CUBIC)
+
+            items.append({
+                "pos_idx": 2,
+                "row": 0,
+                "bbox": (0, 0, bw, bh),
+                "centroid": (bw / 2.0, bh / 2.0),
+                "label_id": 1,
+                "bin_32": bin_32,
+                "area_32": area_32,
+                "gray_32": gray_32,
+            })
+            labels.append(ch)
+    return items, labels
 
 
 def format_vietnamese_plate(raw_str: str) -> str:

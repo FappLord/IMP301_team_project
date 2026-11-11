@@ -14,12 +14,121 @@ import os
 import re
 import csv
 import json
+import io
 import docx
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+plt.rcParams["mathtext.fontset"] = "cm"
+
+
+def clean_tex_inline(text: str) -> str:
+    s = text
+    reps = {
+        r"\rightarrow": "→", r"\implies": "⇒", r"\times": "×",
+        r"\le": "≤", r"\leq": "≤", r"\ge": "≥", r"\geq": "≥",
+        r"\neq": "≠", r"\infty": "∞", r"\uparrow": "↑", r"\downarrow": "↓",
+        r"\in": "∈", r"\notin": "∉", r"\subset": "⊂", r"\approx": "≈",
+        r"\pm": "±", r"\cdot": "·", r"\circ": "°", r"\sum": "∑", r"\prod": "∏",
+        r"\sigma": "σ", r"\mu": "μ", r"\omega": "ω", r"\eta": "η",
+        r"\gamma": "γ", r"\theta": "θ", r"\lambda": "λ", r"\pi": "π",
+        r"\Delta": "Δ", r"\Omega": "Ω", r"\partial": "∂", r"\mathbb{R}": "ℝ",
+        r"\mathbb{I}": "I", r"\dots": "...", r"\cdots": "...",
+        r"\{": "{", r"\}": "}",
+    }
+    for k, v in reps.items():
+        s = s.replace(k, v)
+    s = re.sub(r"\\(text|mathrm|mathbf|mathcal|mathbb)\{([^}]+)\}", r"\2", s)
+    s = re.sub(r"\\(hat|bar|tilde)\{([^}]+)\}", r"\2̂", s)
+    s = re.sub(r"\\frac\{([^}]+)\}\{([^}]+)\}", r"(\1)/(\2)", s)
+    s = re.sub(r"\\sqrt\{([^}]+)\}", r"√(\1)", s)
+    s = re.sub(r"\$([^$]+)\$", r"\1", s)
+    s = re.sub(r"\\([a-zA-Z]+)", r"\1", s)
+    return s
+
+
+def clean_tex_for_mathtext(s: str) -> str:
+    s = s.strip()
+    s = s.replace(r"\underbrace", "")
+    s = re.sub(r"\\le\b", r"\\leq", s)
+    s = re.sub(r"\\ge\b", r"\\geq", s)
+    s = re.sub(r"_\{([^}]+)\\text\{ times\}\}", r"_{\1}", s)
+    s = re.sub(r"_\{([^}]+)\\mathrm\{ times\}\}", r"_{\1}", s)
+    s = s.replace(r"\mathbb{I}", r"\mathbf{I}")
+    s = s.replace(r"\mathbb{R}", r"\mathrm{R}")
+    s = s.replace(r"\mathcal{R}e", r"\mathrm{Re}")
+    s = s.replace(r"\text", r"\mathrm")
+    s = s.replace(r"\%", "%")
+    for macro in [r"\left", r"\right", r"\Big", r"\big", r"\!", r"\,", r"\;"]:
+        s = s.replace(macro, "")
+    return s
+
+
+def render_math_to_png(tex: str, fontsize: float = 12.5) -> io.BytesIO:
+    cleaned = clean_tex_for_mathtext(tex)
+    fig = plt.figure(figsize=(0.01, 0.01))
+    fig.text(0, 0, f"${cleaned}$", fontsize=fontsize)
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=300, bbox_inches="tight", pad_inches=0.03, transparent=True)
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+
+def add_display_equation(doc, raw_eq: str):
+    raw = raw_eq.strip("$").strip()
+    m_eq = re.search(r"\\qquad\s*\((\d+)\)\s*$", raw)
+    eq_num = m_eq.group(1) if m_eq else None
+    if m_eq:
+        raw = raw[: m_eq.start()].strip()
+
+    tbl = doc.add_table(rows=1, cols=2)
+    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+    for cell in tbl.rows[0].cells:
+        tcPr = cell._tc.get_or_add_tcPr()
+        tcBorders = OxmlElement("w:tcBorders")
+        for b in ["top", "left", "bottom", "right"]:
+            edge = OxmlElement(f"w:{b}")
+            edge.set(qn("w:val"), "none")
+            tcBorders.append(edge)
+        tcPr.append(tcBorders)
+
+    c0 = tbl.cell(0, 0)
+    c1 = tbl.cell(0, 1)
+    c0.width = Inches(5.8)
+    c1.width = Inches(0.7)
+
+    p0 = c0.paragraphs[0]
+    p0.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    if r"\begin{bmatrix}" in raw:
+        clean_text = raw.replace(r"\begin{bmatrix}", "[").replace(r"\end{bmatrix}", "]")
+        clean_text = clean_text.replace(r"\\", " ; ").replace("&", " ")
+        clean_text = clean_tex_inline(clean_text)
+        r0 = p0.add_run(clean_text)
+        r0.italic = True
+        r0.font.size = Pt(11)
+    else:
+        try:
+            buf = render_math_to_png(raw)
+            p0.add_run().add_picture(buf)
+        except Exception:
+            clean_text = clean_tex_inline(raw)
+            r0 = p0.add_run(clean_text)
+            r0.italic = True
+            r0.font.size = Pt(11)
+
+    if eq_num:
+        p1 = c1.paragraphs[0]
+        p1.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        r1 = p1.add_run(f"({eq_num})")
+        r1.font.size = Pt(11)
 
 
 def set_cell_background(cell, fill_hex: str):
@@ -33,11 +142,7 @@ def set_cell_background(cell, fill_hex: str):
 
 def add_formatted_runs(paragraph, text: str, base_font_size: int = 11):
     """Parse markdown **bold** and `code` spans into formatted Word runs."""
-    # Clean LaTeX inline math markers for cleaner Word readability
-    cleaned = text.replace("\\rightarrow", "→").replace("\\implies", "⇒").replace("\\times", "×")
-    cleaned = cleaned.replace("\\le", "≤").replace("\\ge", "≥").replace("\\neq", "≠")
-    cleaned = cleaned.replace("\\infty", "∞").replace("\\uparrow", "↑").replace("\\downarrow", "↓")
-    cleaned = re.sub(r"\$([^$]+)\$", r"\1", cleaned)
+    cleaned = clean_tex_inline(text)
 
     tokens = re.split(r"(\*\*.*?\*\*|`.*?`)", cleaned)
     for tok in tokens:
@@ -61,7 +166,20 @@ def add_markdown_table(doc, table_lines: list[str]):
     rows_data = []
     for line in table_lines:
         stripped = line.strip().strip("|")
-        cells = [c.strip().replace("<br>", "\n") for c in stripped.split("|")]
+        # Split on '|' only outside of $...$ math and `...` code spans
+        raw_cells, buf, in_math, in_code = [], "", False, False
+        for ch in stripped:
+            if ch == "`" and not in_math:
+                in_code = not in_code
+            elif ch == "$" and not in_code:
+                in_math = not in_math
+            if ch == "|" and not in_math and not in_code:
+                raw_cells.append(buf)
+                buf = ""
+            else:
+                buf += ch
+        raw_cells.append(buf)
+        cells = [c.strip().replace("<br>", "\n") for c in raw_cells]
         # Skip separator line like | :--- | :---: |
         if all(re.match(r"^[:\-]+$", c.replace(" ", "")) for c in cells if c):
             continue
@@ -110,6 +228,42 @@ def build_docx_from_markdown(md_path: str = "report/FINAL_REPORT.md", out_docx: 
             i += 1
             continue
 
+        # Author Grid HTML
+        if "<div class=\"author-grid\">" in stripped or "<div class='author-grid'>" in stripped:
+            auth_lines = [stripped]
+            i += 1
+            while i < n and "</div>\n</div>" not in lines[i] and not lines[i].strip().startswith("##"):
+                auth_lines.append(lines[i])
+                if lines[i].strip() == "</div>":
+                    i += 1
+                    break
+                i += 1
+            full_auth_html = "\n".join(auth_lines)
+            authors = re.findall(r"<b>(.*?)</b><br/?>\s*([A-Za-z0-9]+)", full_auth_html)
+            if authors:
+                tbl_a = doc.add_table(rows=1, cols=len(authors))
+                tbl_a.alignment = WD_TABLE_ALIGNMENT.CENTER
+                for a_idx, (name, sid) in enumerate(authors):
+                    c = tbl_a.cell(0, a_idx)
+                    # remove borders
+                    tcPr = c._tc.get_or_add_tcPr()
+                    tcBorders = OxmlElement("w:tcBorders")
+                    for b in ["top", "left", "bottom", "right"]:
+                        edge = OxmlElement(f"w:{b}")
+                        edge.set(qn("w:val"), "none")
+                        tcBorders.append(edge)
+                    tcPr.append(tcBorders)
+                    p = c.paragraphs[0]
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    r_name = p.add_run(name + "\n")
+                    r_name.bold = True
+                    r_name.font.size = Pt(10)
+                    r_sid = p.add_run(sid.strip())
+                    r_sid.font.size = Pt(9.5)
+                    r_sid.font.color.rgb = RGBColor(0x44, 0x44, 0x44)
+                doc.add_paragraph()
+            continue
+
         # Code block
         if stripped.startswith("```"):
             code_lines = []
@@ -126,12 +280,7 @@ def build_docx_from_markdown(md_path: str = "report/FINAL_REPORT.md", out_docx: 
 
         # Display math block $$...$$
         if stripped.startswith("$$"):
-            math_text = stripped.strip("$").strip()
-            p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            r = p.add_run(math_text)
-            r.italic = True
-            r.font.size = Pt(11)
+            add_display_equation(doc, stripped)
             i += 1
             continue
 
@@ -148,8 +297,31 @@ def build_docx_from_markdown(md_path: str = "report/FINAL_REPORT.md", out_docx: 
         if stripped.startswith("#"):
             level = min(len(stripped) - len(stripped.lstrip("#")), 4)
             title_text = stripped.lstrip("#").strip()
-            h = doc.add_heading("", level=level if level > 1 else 0)
-            add_formatted_runs(h, title_text, base_font_size=16 if level == 1 else (14 if level == 2 else 12))
+            if "BÁO CÁO ĐỒ ÁN MÔN HỌC" in title_text or "COURSE PROJECT REPORT" in title_text:
+                p_top = doc.add_paragraph()
+                p_top.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                r_top = p_top.add_run(clean_tex_inline(title_text))
+                r_top.bold = True
+                r_top.font.name = "Times New Roman"
+                r_top.font.size = Pt(15.5)
+                r_top.font.color.rgb = RGBColor(0x12, 0x3E, 0x67)
+
+                p_line = doc.add_paragraph()
+                p_line.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                r_line = p_line.add_run("―" * 46)
+                r_line.font.color.rgb = RGBColor(0x12, 0x3E, 0x67)
+                r_line.bold = True
+            elif "ĐỀ TÀI:" in title_text or "TOPIC:" in title_text:
+                p_topic = doc.add_paragraph()
+                p_topic.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                r_topic = p_topic.add_run(clean_tex_inline(title_text))
+                r_topic.bold = True
+                r_topic.font.name = "Times New Roman"
+                r_topic.font.size = Pt(12.5)
+                r_topic.font.color.rgb = RGBColor(0x12, 0x3E, 0x67)
+            else:
+                h = doc.add_heading("", level=level if level > 1 else 0)
+                add_formatted_runs(h, title_text, base_font_size=15 if level == 1 else (13 if level == 2 else 11.5))
             i += 1
             continue
 
@@ -165,7 +337,8 @@ def build_docx_from_markdown(md_path: str = "report/FINAL_REPORT.md", out_docx: 
                     p_img.add_run().add_picture(img_path, width=Inches(6.3))
                     p_cap = doc.add_paragraph()
                     p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    r_cap = p_cap.add_run(f"Hình: {caption}")
+                    prefix = "Hình" if "_VI" in os.path.basename(md_path) else "Figure"
+                    r_cap = p_cap.add_run(f"{prefix}: {caption}")
                     r_cap.italic = True
                     r_cap.font.size = Pt(10)
             i += 1
@@ -208,19 +381,19 @@ def build_expanded_manifest_csv():
 
     deg_descriptions = {
         "clean": "Original Clean Camera Image (Reference)",
-        "awgn": "Additive White Gaussian Noise (sigma=10.0, Doc Ch. 3.2 Slide 7)",
-        "salt_pepper": "Impulse Salt-and-Pepper Noise (pa=0.02, pb=0.02, Doc Ch. 3.2 Slide 12)",
-        "rayleigh": "Skewed Rayleigh Low-Light Noise (a=-8, b=160, Doc Ch. 3.2 Slide 8)",
-        "periodic": "2D Sinusoidal Periodic Interference (A=24, u0=24, v0=18, Doc Ch. 3.3 Slides 18-22)",
-        "motion_blur": "Linear Motion Blur (L=7px, theta=12deg) + AWGN (sigma=7.0, Doc Ch. 3.4 & 3.6-3.7)",
+        "awgn": "Additive White Gaussian Noise (sigma=10.0)",
+        "salt_pepper": "Impulse Salt-and-Pepper Noise (pa=0.02, pb=0.02)",
+        "rayleigh": "Skewed Rayleigh Low-Light Noise (a=-8, b=160)",
+        "periodic": "2D Sinusoidal Periodic Interference (A=24, u0=24, v0=18)",
+        "motion_blur": "Linear Motion Blur (L=7px, theta=12deg) + AWGN (sigma=7.0)",
     }
     rest_methods = {
         "clean": "Identity (No Restoration Needed)",
-        "awgn": "2D Haar Wavelet Soft-Threshold Denoising (Ch. 3.5) + Unsharp Highboost (Ch. 2.4)",
-        "salt_pepper": "3x3 Center-Weighted Median Filter (Ch. 2.2 Slide 13 & Ch. 3.3)",
-        "rayleigh": "3x3 Harmonic Mean Filter (Ch. 3.3 Slide 15) + Unsharp Highboost (Ch. 2.4)",
-        "periodic": "2D Frequency-Domain Butterworth Notch Reject Filter (Ch. 3.3 Slides 18-22)",
-        "motion_blur": "2D Haar Wavelet Shrinkage + Regularized Wiener / CLS Deconvolution (Ch. 3.6-3.7)",
+        "awgn": "2D Haar Wavelet Soft-Threshold Denoising + Unsharp Highboost",
+        "salt_pepper": "3x3 Center-Weighted Median Filter",
+        "rayleigh": "3x3 Harmonic Mean Filter + Unsharp Highboost",
+        "periodic": "2D Frequency-Domain Butterworth Notch Reject Filter",
+        "motion_blur": "2D Haar Wavelet Shrinkage + Regularized Wiener / CLS Deconvolution",
     }
 
     csv_path = "data/splits/expanded_dataset_manifest.csv"
@@ -251,6 +424,10 @@ def build_expanded_manifest_csv():
 
 
 if __name__ == "__main__":
-    build_docx_from_markdown()
+    # 1. Build English / Bilingual Word Report
+    build_docx_from_markdown("report/FINAL_REPORT.md", "report/FINAL_REPORT_IMP302.docx")
+    # 2. Build Vietnamese Word Report
+    build_docx_from_markdown("report/FINAL_REPORT_VI.md", "report/FINAL_REPORT_VI_IMP302.docx")
+    # 3. Export Manifest without any slide references
     build_expanded_manifest_csv()
 

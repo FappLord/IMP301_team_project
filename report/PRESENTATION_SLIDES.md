@@ -1,90 +1,178 @@
-# SLIDE TRÌNH CHIẾU BẢO VỆ ĐỒ ÁN IMP302 (IMAGE & VIDEO PROCESSING)
+# BÁO CÁO TRÌNH CHIẾU ĐỒ ÁN IMP302 — DIGITAL IMAGE & VIDEO PROCESSING
 
 ---
 
-## SLIDE 1: TIÊU ĐỀ ĐỒ ÁN
-- **Học phần:** Xử lý Ảnh và Video (`IMP302`)
-- **Đề tài:** **Khôi Phục Ảnh Biển Số Xe Suy Giảm Đa Tác Nhân Kết Hợp Phân Đoạn và Nhận Dạng Ký Tự Bằng Phương Pháp Xử Lý Ảnh Cổ Điển**
-- **Định hướng học thuật:**
-  - **Chủ đề trọng tâm:** **Khôi phục & Tái tạo Ảnh Suy giảm (Chapter 3 & Chapter 8 trong `Doc/`)**
-  - **Phương pháp:** 100% Xử lý ảnh cổ điển từ nguyên lý gốc (*First Principles*), bám sát 12 chương bài giảng `Doc/1..12.pdf`, không dùng pre-trained Deep Learning OCR.
+## SLIDE 1: TIÊU ĐỀ & THÔNG TIN NHÓM THỰC HIỆN
+- **Đồ án môn học:** IMP302 — Digital Image and Video Processing
+- **Đề tài:** **Multi-Degradation Image Restoration, Perspective Homography Rectification, and Hybrid Transform–Topological Pattern Recognition for Two-Line License Plates**
+*(Khôi phục Ảnh Suy giảm Đa tác nhân, Nắn Phối cảnh Homography và Nhận dạng Ký tự Biển số Xe máy Hai dòng bằng Xử lý Ảnh Cổ điển)*
+- **Giảng viên hướng dẫn:** Bộ môn Xử lý Ảnh & Thị giác Máy tính
+- **Danh sách thành viên nhóm:**
+  1. **Võ Tấn Phát** — `SE194484` (Trưởng nhóm / Pipeline Architecture & Restoration)
+  2. **Nguyễn Trung Dũng** — `SE194119` (Detection & Perspective Homography)
+  3. **Lê Ngọc Thương** — `SE194271` (Segmentation & Border Filtering)
+  4. **Nguyễn Bảo Ái** — `SE192158` (Feature Extraction & Transform Descriptors)
+  5. **Lê Minh Khôi** — `SE192396` (Pattern Classification & Evaluation)
+- **Định hướng kỹ thuật:** **100% White-Box Classical Image Processing & Statistical Machine Learning** (Không sử dụng mạng nơ-ron tích chập sâu / Deep Learning hộp đen).
 
 ---
 
-## SLIDE 2: ĐẶT VẤN ĐỀ & TẠI SAO KHÔI PHỤC ẢNH LÀ CHỦ ĐỀ TRỌNG TÂM?
-- Trong thực tế giám sát giao thông, biển số xe máy trong ảnh $472\times 303$ chỉ chiếm vùng rất nhỏ ($\approx 72\times 63\text{ px}$), khoảng hở giữa hai chữ số liền kề chỉ rộng **$3\sim 4\text{ pixels}$**.
-- Khi gặp **nhòe chuyển động tuyến tính** ($L=7\text{ px}, \theta=12^\circ$) + **nhiễu cảm biến AWGN / Muối tiêu / Giao thoa tuần hoàn**:
-  - Vệt nhòe làm các ký tự dính liền vào nhau và dính vào khung viền biển số.
-  - Nếu đưa trực tiếp vào bộ phân đoạn & nhận dạng: **Tỷ lệ phân đoạn đúng sụp đổ từ 95.65% xuống 1.74% (0.00% nhận dạng đúng biển số)!**
-- $\Rightarrow$ **Module 1 (Chapter 3 Image Restoration)** đóng vai trò quyết định sự sống còn của toàn bộ hệ thống.
+## SLIDE 2: ĐẶT VẤN ĐỀ & BÀI TOÁN SUY GIẢM VẬT LÝ
+- **Thách thức đặc thù của biển số xe máy 2 dòng tại Việt Nam:**
+  - Kích thước ảnh giám sát $472\times 303\text{ px}$, vùng biển số chỉ chiếm $\approx 72\times 63\text{ px}$.
+  - Khoảng cách giữa các ký tự liền kề trên biển chuẩn hóa chỉ rộng **$3\text{--}4\text{ pixels}$**.
+- **Mô hình suy giảm vật lý kết hợp biến dạng phối cảnh:**
+  $$g(x,y) = \mathcal{T}_{\mathbf{H}}\!\Big\{ (h * f)(x,y) \Big\} + \eta(x,y)$$
+- **Hiện tượng bệt nét (Stroke Smearing):**
+  - Nhòe chuyển động ($L = 7\text{ px}, \theta = 12^\circ$) nối liền các ký tự thành một khối liên thông duy nhất.
+  - **Hậu quả nếu không khôi phục:** Độ chính xác phân đoạn ký tự sụp đổ từ **$95.65\%$ xuống $1.74\%$**, tỷ lệ nhận dạng toàn biển rơi về **$0.00\%$**!
+- $\Rightarrow$ **Khôi phục ảnh (Image Restoration) là khâu tiên quyết quyết định sự sống còn của toàn bộ hệ thống.**
 
 ---
 
-## SLIDE 3: BẢNG ĐỐI CHIẾU KIẾN THỨC VỚI 12 CHƯƠNG BÀI GIẢNG (`Doc/1..12.pdf`)
-- **Chapter 1 & 2 (`Doc/1, 2.pdf`):** Full-scale Histogram Stretch, Log Transform, Weighted Median Filter ($3\times 3$), Unsharp Masking / Highboost, Morphological Top-Hat / Black-Hat / Opening / Closing, Otsu's Method, 8-Connected Region Labeling, Bicubic Interpolation.
-- **Chapter 3 (`Doc/3.pdf` — Trọng tâm):** Mô hình $g=h*f+\eta$, 6 hàm mật độ nhiễu PDFs (Gaussian, Rayleigh, Gamma, Uniform, Salt & Pepper, Periodic), Arithmetic/Geometric/Harmonic/Contraharmonic Mean, **Butterworth Notch Reject Filter**, **2D Wavelet Denoising**, **Inverse Filter**, **Wiener Filter**, **Constrained Least Squares (CLS) Filter**.
-- **Chapter 4 (`Doc/4.pdf`):** **2D DHT** ($\text{cas}$), **2D DCT**, **Sequency-Ordered 2D WHT**, và **2D Haar DWT**.
-- **Chapter 7, 8, 9 (`Doc/7, 8, 9.pdf`):** Nội suy lấy mẫu lại, chỉ số **MSE / SNR / PSNR / SSIM**, và phân cụm **K-Means ($K=2$)**.
-- **Chapter 10, 11, 12 (`Doc/10, 11, 12.pdf`):** **Fourier Boundary Descriptors**, **Covariance Matrix Eccentricity**, **7 Hu Moments**, **Euler Number**, **HOG**, **PCA**, **IoU**, và 7 bộ phân loại (**Min-Dist, Correlation, Gaussian Bayes, MLP, k-NN, RF, SVM**).
+## SLIDE 3: KIẾN TRÚC TỔNG THỂ 4 GIAI ĐOẠN (PIPELINE ARCHITECTURE)
+
+| Giai đoạn | Tên Module | Đầu vào $\to$ Đầu ra | Thuật toán & Phương pháp Toán học Cốt lõi |
+| :--- | :--- | :--- | :--- |
+| **Stage 1** | `restoration.py` | Ảnh suy giảm $g(x,y) \to$ Ảnh khôi phục $\hat{f}(x,y)$ | Center-Weighted Median, Harmonic Mean, Butterworth Notch Reject $H_{\text{NR}}$, 2D Haar DWT BayesShrink + Hybrid Wiener–CLS Deconvolution |
+| **Stage 2** | `detection.py` | Ảnh khôi phục $\to$ Vùng biển số $160\times 128$ | Morphological Black-Hat, Sobel dọc $\|G_x\|$, 3-Stream Rotated Extent, NMS IoU (trái sang phải), 4-Point Homography $\mathbf{H}_{3\times 3}$ Bicubic |
+| **Stage 3** | `segmentation.py` | Biển số $160\times 128 \to$ Ký tự $32\times 32$ | Local Gaussian Adaptive Thresholding, Lọc viền Maximum Contiguous Run-Length (`_max_run`), 8-Connected Component Labeling |
+| **Stage 4** | `recognition.py` | Ký tự $32\times 32 \to$ Chuỗi biển số `29-D2 399.99` | 2D WHT / DCT / DHT ($100$-D) + HOG ($324$-D) + Hu/Cov/Fourier/Euler ($56$-D), RBF-SVM, Hậu kiểm Tô-pô học & Cú pháp |
 
 ---
 
-## SLIDE 4: CHIA TÁCH TRAIN / VAL / TEST & MỞ RỘNG DỮ LIỆU GẤP $6\times$ (`data/splits/`)
-- **Chia tách ở cấp độ biển số (Zero Character Leakage):**
-  - **Train (70%):** 80 biển số gốc $\rightarrow$ **480 ảnh biển số mở rộng** ($3.973$ mẫu ký tự)
-  - **Validation (15%):** 17 biển số gốc $\rightarrow$ **102 ảnh biển số mở rộng** ($767$ mẫu ký tự)
-  - **Test (15%):** 18 biển số gốc $\rightarrow$ **108 ảnh biển số mở rộng** ($903$ mẫu ký tự)
-- **6 Kịch bản mở rộng dữ liệu từ Chapter 3 (`115 × 6 = 690` ảnh):**
-  1. `clean` (Ảnh thực tế gốc)
-  2. `awgn` ($\sigma=10.0$, Ch. 3.2 P7)
-  3. `salt_pepper` ($P=4\%$, Ch. 3.2 P12)
-  4. `rayleigh` (Nhiễu lệch thiếu sáng, Ch. 3.2 P8)
-  5. `periodic` (Sọc giao thoa hình sin $u_0=24, v_0=18$, Ch. 3.3 P18–22)
-  6. `motion_blur` (Nhòe chuyển động $L=7, \theta=12^\circ + \text{AWGN }\sigma=7.0$, Ch. 3.4 & 3.6–3.7)
+## SLIDE 4: PHÂN CHIA DỮ LIỆU KHÔNG RÒ RỈ & MỞ RỘNG ĐA SUY GIẢM $6\times$
+- **Nguyên tắc chia tách ở cấp độ biển số (Zero-Leakage Plate-Level Split):**
+  - Tránh triệt để việc ký tự cùng một biển số xuất hiện ở cả Train và Test.
+  - **Train (70%):** 80 biển số gốc $\to$ **480 ảnh** ($3.973$ mẫu ký tự).
+  - **Validation (15%):** 17 biển số gốc $\to$ **102 ảnh** ($767$ mẫu ký tự).
+  - **Held-Out Test (15%):** 18 biển số gốc $\to$ **108 ảnh** ($903$ mẫu ký tự).
+- **Mở rộng $6\times$ theo 6 mô hình suy giảm vật lý thực tế:**
+  1. `clean`: Ảnh thực tế gốc ($115$ ảnh)
+  2. `awgn`: Nhiễu trắng cảm biến Gaussian ($\sigma = 10.0$)
+  3. `salt_pepper`: Nhiễu xung lực muối tiêu ($4\%$ điểm chết)
+  4. `rayleigh`: Nhiễu lệch bất đối xứng thiếu sáng ($a = -8.0, b = 160.0$)
+  5. `periodic`: Nhiễu giao thoa sọc hình sin ($A = 24.0, u_0 = 24, v_0 = 18$)
+  6. `motion_blur`: Nhòe chuyển động tuyến tính ($L = 7\text{ px}, \theta = 12^\circ$) + AWGN ($\sigma = 7.0$)
 
 ![Dataset Splits and Expansion](../outputs/fig10_dataset_splits_and_expansion.png)
 
 ---
 
-## SLIDE 5: MODULE 1 (TRỌNG TÂM) — KHÔI PHỤC ĐA NHIỄU & GIẢI CHẬP WIENER / CLS
-- **Khử nhiễu xung Muối Tiêu:** **Center-Weighted Median Filter** ($\mathbf{W}=\begin{bmatrix}1&2&1\\2&3&2\\1&2&1\end{bmatrix}$) nâng PSNR từ **19.22 dB $\rightarrow$ 37.20 dB** (SSIM **0.9875**), vượt xa Median chuẩn ($35.31\text{ dB}$).
-- **Khử nhiễu Tuần hoàn:** **Butterworth Notch Reject Filter** trên miền 2D FFT triệt tiêu cặp đỉnh xung liên hợp $(\pm u_0, \pm v_0)$, nâng PSNR từ **23.75 dB $\rightarrow$ 38.42 dB** (+14.67 dB).
-- **Khử Nhòe Chuyển động + AWGN:** Kết hợp **2D Haar Wavelet Shrinkage** + **Hybrid Wiener-CLS Deconvolution** ($\hat{F}(u,v) = \frac{(1+K)H^*(u,v)}{|H(u,v)|^2 + K + \gamma|P(u,v)|^2}G(u,v)$), nâng PSNR từ **25.42 dB $\rightarrow$ 28.34 dB** và tránh hoàn toàn hiện tượng nổ nhiễu của Inverse Filter ($21.69\text{ dB}$).
+## SLIDE 5: STAGE 1 — KHÔI PHỤC ẢNH ĐA SUY GIẢM (IMAGE RESTORATION)
+- **Nhiễu xung lực Muối Tiêu (Salt & Pepper):**
+  - Mặt nạ **$3\times 3$ Center-Weighted Median Filter** ưu tiên điểm tâm:
+    $$\mathbf{W}_{\text{WMF}} = \begin{bmatrix}1 & 2 & 1 \\ 2 & 3 & 2 \\ 1 & 2 & 1\end{bmatrix}$$
+  - Nâng PSNR từ **$19.22\text{ dB} \to 37.20\text{ dB}$ (+17.98 dB)**, SSIM đạt **$0.9875$**, bảo toàn nguyên vẹn các góc nhọn nét chữ `'1'`, `'7'`, `'4'`.
+- **Nhiễu Giao thoa Tuần hoàn (Periodic Sinusoidal Interference):**
+  - **Butterworth Notch Reject Filter** bậc $n=2$, $D_0 = 6.0\text{ px}$ triệt tiêu cặp đỉnh xung đối xứng trên phổ 2D FFT.
+  - Nâng PSNR từ **$23.75\text{ dB} \to 38.42\text{ dB}$ (+14.67 dB)**.
+- **Nhòe chuyển động + Nhiễu cảm biến (Motion Blur + AWGN):**
+  - **Bước 1:** Khử nhiễu đa phân giải bằng **2D Haar Wavelet BayesShrink** trên 3 dải cao tần $(LH, HL, HH)$ với ngưỡng mềm $T_s$.
+  - **Bước 2:** Giải chập bằng bộ lọc **Hybrid Wiener–CLS** bảo toàn độ lợi một chiều:
+    $$\hat{F}(u,v) = \left[ \frac{(1 + K)\,H^*(u,v)}{|H(u,v)|^2 + K + \gamma_{\text{CLS}}\,|P(u,v)|^2} \right] G_{\text{den}}(u,v)$$
+  - Triệt tiêu hoàn toàn gợn sóng Gibbs, giải phóng khe hở giữa các chữ cái và nâng tỷ lệ phân đoạn từ **$1.74\% \to 86.09\%$**.
 
-![Module 1 Restoration](../outputs/fig01_module1_restoration.png)
-
----
-
-## SLIDE 6: MODULE 2 & 3 — PHÁT HIỆN BIỂN SỐ, ĐỐI SÁNH OTSU / K-MEANS / ADAPTIVE & CCL 8 HƯỚNG
-- **Module 2 (Chapters 1, 2, 7, 11):** Black-Hat ($25\times 25$) + Sobel dọc $|G_x|$ + Closing/Opening + Xoay Affine **Bicubic** $\rightarrow$ **100% (115/115)** phát hiện đúng biển số.
-- **Module 3 (Chapters 1.2 & 9.1):**
-  - Cài đặt từ công thức gốc **Otsu's Method** ($\sigma_B^2(t)$), **K-Means Clustering ($K=2$)**, và **Local Adaptive Gaussian Thresholding**.
-  - Thuật toán cắt cầu nối khung viền + **8-Connected Region Labeling** đạt **95.65% (110/115)** phân đoạn đúng tuyệt đối số ký tự (dưới bóng đổ mạnh: Adaptive đạt **94.78%**, K-Means **92.17%**, Otsu **91.30%**).
-
-![Module 3 Segmentation](../outputs/fig03_module3_segmentation.png)
-
----
-
-## SLIDE 7: MODULE 4 — ĐỐI SÁNH TRANSFORM (CH. 4), ĐẶC TRƯNG (CH. 10) & PHÂN LOẠI (CH. 12)
-- **Đối sánh 3 phép biến đổi Chapter 4 (100 chiều, SVM 5-Fold CV):**
-  - **2D WHT (Sequency-ordered, Ch. 4.4):** **95.33%** (nhanh nhất, chỉ dùng cộng/trừ)
-  - **2D DCT (Ch. 4.3):** **95.23%**
-  - **2D DHT (Hartley, Ch. 4.2):** **92.84%**
-- **Kết hợp Đặc trưng (WHT + HOG + Hu/Covariance Eccentricity/Fourier Boundary/Euler) & PCA (Ch. 10.3):**
-  - **Combined + PCA (80 chiều) + MLP (Ch. 12.4):** **96.99%** (5-Fold CV)
-  - **Combined (480 chiều) + SVM:** **96.37%** (5-Fold CV) | **Gaussian Bayes (Ch. 12.3):** **94.40%**
-- **Hiệu quả huấn luyện trên tập mở rộng $6\times$ (Kiểm định độc lập trên Held-Out Test Split):**
-  - Huấn luyện SVM trên **480 biển mở rộng ($3.973$ ký tự)** giúp tăng độ chính xác trên tập Test mở rộng từ **92.36% lên 95.24% (+2.88%)**!
-
-![Module 4 Evaluation](../outputs/fig05_module4_evaluation.png)
+![Stage 1 Restoration Visual Pipeline](../outputs/fig01_module1_restoration.png)
 
 ---
 
-## SLIDE 8: KẾT QUẢ TOÀN TUYẾN & DEMO TRÊN TẬP KIỂM THỬ ĐỘC LẬP (`TEST SPLIT`)
-- Trên tập kiểm thử độc lập (**Held-Out Test Split**), việc bật **Module 1 (Chapter 3 Restoration)** giúp khôi phục tỷ lệ nhận dạng toàn biển số:
-  - **Nhòe chuyển động ($L=7, \sigma=7$):** từ **0.00% $\rightarrow$ 61.11%** (nhận dạng ký tự từ **3.85% $\rightarrow$ 93.59%**)
-  - **Nhiễu Muối Tiêu ($4\%$):** từ **55.56% $\rightarrow$ 94.44%**
-  - **Nhiễu Tuần hoàn (Sinusoidal):** từ **72.22% $\rightarrow$ 94.44%**
-  - **Nhiễu Gaussian / Rayleigh:** từ **94.44% $\rightarrow$ 100.00%**
+## SLIDE 6: STAGE 2 — ĐỊNH VỊ ĐA BIỂN SỐ & NẮN PHỐI CẢNH 4 ĐỈNH
+- **Khai thác năng lượng nét chữ:**
+  - Kết hợp biến đổi hình thái học **Black-Hat** $(I \bullet B) - I$ và gradient dọc **Sobel $|G_x|$** để làm nổi bật nét ký tự tối trên nền phản quang.
+- **Sinh ứng viên 3 luồng & Rotated Extent:**
+  - Với biển số chụp xiên góc lớn (nghiêng tới $-28.6^\circ$), tỷ lệ diện tích khung trục đứng rơi xuống $0.51$, nhưng **Rotated Extent** vẫn đạt $> 0.66$:
+    $$\text{Extent}_{\text{rot}} = \frac{\text{Area}}{W_{\text{rot}} \cdot H_{\text{rot}}} > 0.66$$
+- **NMS IoU & Sắp xếp Trái sang Phải:**
+  - Phát hiện đồng thời nhiều biển số trong khung hình, lọc trùng bằng NMS ($\text{IoU} \le 0.25$) và sắp xếp nghiêm ngặt theo tọa độ $x$ từ trái sang phải.
+- **Nắn Phối cảnh 4 Đỉnh (4-Point Perspective Homography):**
+  - Dùng thuật toán Douglas–Peucker tìm 4 góc tứ giác và giải ma trận $\mathbf{H}_{3\times 3}$, nắn thẳng phối cảnh về kích thước chuẩn $160\times 128\text{ px}$ bằng nội suy **Bicubic**.
 
-![End-to-End Demo](../outputs/fig07_end_to_end_demo.png)
+![Stage 2 Detection and Deskewing](../outputs/fig02_module2_detection.png)
+
+---
+
+## SLIDE 7: STAGE 3 — NHỊ PHÂN HÓA & LỌC VIỀN CONTIGUOUS RUN-LENGTH
+- **Đối sánh Binarization:**
+  - **Global Otsu:** Tối đa hóa phương sai giữa hai lớp $\sigma_B^2(t)$.
+  - **K-Means ($K=2$):** Phân cụm cực tiểu hóa tổng bình phương khoảng cách.
+  - **Local Gaussian Adaptive:** Ước lượng mặt phẳng nền cục bộ theo cửa sổ $27\times 27$ $\to$ Đạt độ chính xác tách ký tự cao nhất (**$95.65\%$** trên ảnh chuẩn và **$94.78\%$** dưới bóng đổ chéo).
+- **Phát hiện bước ngoặt: Lọc viền Maximum Contiguous Run-Length (`_max_run`):**
+  - Trên biển số hai dòng, 4 đỉnh ký tự hàng trên (`2`, `9`, `D`, `2`) cùng nằm trên một dải ngang chiếm tới $49\%$ chiều rộng biển.
+  - Nếu lọc theo mật độ trung bình $> 40\%$, đỉnh chữ `'D'` sẽ bị cắt cụt (biến thành chữ `'U'` và bị nhận nhầm thành `'B'`)!
+  - **Giải pháp:** Đo độ dài đoạn liên tục dài nhất $L_{\max}$:
+    - Đỉnh 4 ký tự rời nhau có $L_{\max} \le 20\text{ px}$.
+    - Khung viền biển số thật sự là vạch liền có $L_{\max} > 42\text{ px}$.
+  - $\Rightarrow$ **Bảo toàn nguyên vẹn 100% đỉnh chữ `D`, `2`, `7` và cạnh phải số `9`.**
+
+![Stage 3 Segmentation and 8-Connected Labeling](../outputs/fig03_module3_segmentation.png)
+
+---
+
+## SLIDE 8: STAGE 4 — ĐẶC TRƯNG LAI 480-D & HỌC MÁY THỐNG KÊ
+- **Vector đặc trưng Lai 480 chiều (Hybrid Representation):**
+  1. **2D Walsh–Hadamard Transform (WHT, 100-D):** Hệ số năng lượng sequency thấp.
+  2. **Histogram of Oriented Gradients (HOG, 324-D):** Phân bố hướng cạnh cục bộ ($8\times 8$ cells, 9 bins).
+  3. **Đặc trưng Cấu trúc, Biên & Tô-pô (56-D):**
+     - $7$ Moment bất biến Hu + $8$ Boundary Fourier Descriptors
+     - Độ lệch tâm ma trận hiệp phương sai vùng ($3$-D)
+     - **Số Euler Tô-pô ($E = C - H$)**, zoning $4\times 4$ và hồ sơ hình chiếu.
+- **Đối sánh 7 Bộ phân loại Mẫu Cổ điển:**
+  - RBF-SVM và MLP đạt độ chính xác cao nhất (**$96.37\%\text{--}96.99\%$** 5-fold CV).
+  - Huấn luyện trên tập mở rộng $6\times$ giúp tăng thêm **$+2.88\%$** độ chính xác trên tập kiểm thử độc lập.
+- **Hậu kiểm Tô-pô học (Topological Disambiguation Rules):**
+  - **`'D'` vs. `'B'`:** Chữ `'D'` có $H=1$ lỗ ($E=0$), vùng eo giữa hoàn toàn rỗng ($\rho_{\text{waist}} < 0.26$). Chữ `'B'` có $H=2$ lỗ ($E=-1$), vùng eo có vạch đặc ($\rho_{\text{waist}} > 0.42$).
+  - **`'E'` vs. `'C'`:** Kiểm tra mật độ lưỡi ngang giữa $\rho_{\text{mid}} > 0.34$.
+  - **`'7'` vs. `'1'`:** Kiểm tra tỷ số độ rộng mũ trên so với thân giữa $\frac{W_{\text{top}}}{W_{\text{mid}}} \ge 2.25$.
+
+![Stage 4 Feature Extraction and Classifier Comparison](../outputs/fig05_module4_evaluation.png)
+
+---
+
+## SLIDE 9: KẾT QUẢ THỰC NGHIỆM ĐỊNH LƯỢNG & ABLATION STUDY
+- **Đánh giá trên Tập Kiểm thử Độc lập (Held-Out Test Split — 18 biển / 108 ảnh mở rộng):**
+  - **Ảnh không suy giảm (`clean`):** Nhận dạng toàn biển đạt **$94.44\%$** ($94.87\%$ ký tự).
+  - **Nhiễu AWGN:** Nhận dạng toàn biển tăng từ $94.44\% \to \mathbf{100.00\%}$ nhờ khử nhiễu Wavelet.
+  - **Nhiễu Muối tiêu:** Nhận dạng toàn biển tăng từ $55.56\% \to \mathbf{94.44\%}$ nhờ Weighted Median.
+  - **Nhiễu Tuần hoàn:** Nhận dạng toàn biển tăng từ $72.22\% \to \mathbf{94.44\%}$ nhờ Butterworth Notch.
+  - **Nhòe chuyển động:** Nhận dạng ký tự tăng từ $3.85\% \to \mathbf{93.59\%}$, nhận dạng toàn biển từ $0.00\% \to \mathbf{61.11\%}$ nhờ Wavelet + Wiener–CLS.
+
+![Comprehensive Ablation Studies](../outputs/fig06_ablation_studies.png)
+
+---
+
+## SLIDE 10: KIỂM THỬ KHẢ NĂNG TỔNG QUÁT NGOÀI THỰC TẾ (IN-THE-WILD STRESS TESTS)
+- **Kiểm thử trên 4 ca thực tế phức tạp ngoài tập dữ liệu:**
+  - **Case 1 (`images.jpg`):** Ảnh ghép 2 xe máy cạnh nhau, co ngắn phối cảnh $W < H$ $\to$ NMS đa biển sắp xếp từ trái sang phải, nắn phối cảnh 4 đỉnh Homography $\to$ Đọc chính xác cả 2 biển **`29-AB 901.50`** & **`29-AB 901.06`** ($18/18$ ký tự).
+  - **Case 2 (`images (1).jpg`):** Biển số nghiêng $-28.6^\circ$, dán tem `"VIE"` và logo cửa hàng $\to$ Lọc logo $<6$ mảnh, lọc vạch tem $\to$ Nhận dạng đúng **`49-E1 796.52`** ($9/9$ ký tự).
+  - **Case 3 (`images (3).jpg`):** Biển số `29-D2 399.99` $\to$ Lọc viền `_max_run` bảo toàn nét mũ ngang chữ `D` + Hậu kiểm Euler $\to$ Nhận dạng chính xác **`29-D2 399.99`** với độ tự tin chữ `'D'` đạt **$90\%$**.
+  - **Case 4 (`images (2).jpg`):** Chụp qua kính ô tô có vệt viền phải $\to$ Lọc vệt viền mép phải hàng 1 $\to$ Nhận dạng chuẩn xác **`17-B7 581.49`** theo đúng thứ tự từ trái sang phải.
+- $\Rightarrow$ **Độ chính xác trên 4 ca kiểm thử thực tế đạt tuyệt đối: 100% (45/45 ký tự)!**
+
+![In-the-Wild Stress-Test Generalization Cases](../outputs/fig11_wild_generalization_cases.png)
+
+---
+
+## SLIDE 11: DEMO THỜI GIAN THỰC & PHẦN MỀM STUDIO (`demo.py`)
+- **Giao diện đồ họa IMP302 Studio:**
+  - Xử lý trực tiếp ảnh tĩnh (`.jpg/.png`) và luồng video giám sát (`.mp4/.avi`).
+  - Hỗ trợ bật/tắt khôi phục ảnh thời gian thực để đối sánh trực quan kết quả trước/sau.
+- **Cơ chế Bỏ phiếu Đa khung hình (Temporal Majority Voting):**
+  - Cửa sổ trượt 7 khung hình liên tiếp giúp ổn định chuỗi biển số nhận dạng, lọc bỏ sai số nhiễu tức thời.
+- **Hiệu năng thực thi trên CPU thuần (Không cần GPU):**
+  - Tốc độ xử lý đạt **$17.9\text{ ms/frame}$ ($\approx 56\text{ FPS}$)** ở chế độ thông thường.
+  - Đạt **$12\text{--}15\text{ FPS}$** khi bật đầy đủ chuỗi khôi phục Wavelet + Wiener–CLS Deconvolution 2D FFT.
+
+![End-to-End Demo Gallery on Held-Out Test Split](../outputs/fig07_end_to_end_demo.png)
+
+---
+
+## SLIDE 12: KẾT LUẬN & HƯỚNG PHÁT TRIỂN
+- **Đóng góp chính của đồ án:**
+  1. Xây dựng thành công chuỗi xử lý khép kín 4 giai đoạn **100% Classical Image Processing & Machine Learning**, giải thích tường minh từ công thức toán học.
+  2. Chứng minh vai trò cốt lõi của khâu Khôi phục ảnh (Stage 1), giúp tăng PSNR tới $+17.98\text{ dB}$ và giải cứu hệ thống khỏi trạng thái sụp đổ hoàn toàn khi gặp nhòe chuyển động.
+  3. Đề xuất các kỹ thuật cải tiến giải quyết triệt để các góc khuất thực tế: nắn phối cảnh 4 đỉnh Homography, lọc viền `_max_run` bảo toàn mũ chữ, và hậu kiểm hình học tô-pô.
+- **Hướng phát triển tiếp theo:**
+  - Tự động hóa ước lượng tham số PSF mù $(\hat{L}, \hat{\theta})$ từ phổ Cepstrum 2D.
+  - Kết hợp bộ lọc Kalman để theo dõi vết (tracking) đa phương tiện trong luồng video giao thông phức tạp.
+- **Mã nguồn & Báo cáo kỹ thuật:** [https://github.com/FappLord/IMP301_team_project](https://github.com/FappLord/IMP301_team_project)

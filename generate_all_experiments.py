@@ -235,7 +235,7 @@ def run_all_experiments():
 
     fig, axes = plt.subplots(2, 4, figsize=(18, 9), dpi=180)
     fig.suptitle(
-        "Chapter 3 Main Theme: License Plate Image Degradation & Restoration (Wavelet DWT + Wiener / CLS Deconvolution)",
+        "Stage 1: License Plate Image Degradation & Restoration (2D Haar Wavelet + Wiener / CLS Deconvolution)",
         fontsize=13.5,
         fontweight="bold",
         y=0.98,
@@ -248,11 +248,11 @@ def run_all_experiments():
     panels_f1 = [
         (bgr2rgb(sample_img), "1. Original Clean Image f(x,y)\n(Reference Ground Truth)", None),
         (bgr2rgb(deg_s), f"2. Degraded g(x,y) = h*f + n\nPSNR: {q_deg['psnr']:.2f} dB | SSIM: {q_deg['ssim']:.3f}", None),
-        (psf_s, "3. Motion Blur PSF h(x,y)\n(L = 7 px, theta = 12 deg, Ch. 3.4)", "hot"),
-        (dwt_vis, "4. 2D Haar DWT Subbands (Ch. 3.5 & 4.5)\n[LL | LH ; HL | HH]", "gray"),
+        (psf_s, "3. Motion Blur PSF h(x,y)\n(L = 7 px, theta = 12 deg)", "hot"),
+        (dwt_vis, "4. 2D Haar DWT Subbands\n[LL | LH ; HL | HH]", "gray"),
         (bgr2rgb(stages_s["wavelet_denoised"]), "5. Wavelet Soft-Threshold Denoised\n(Suppresses AWGN before Deconv)", None),
-        (bgr2rgb(inv_s), f"6. Direct Inverse Filter (Ch. 3.8)\nPSNR: {q_inv['psnr']:.2f} dB | SSIM: {q_inv['ssim']:.3f}", None),
-        (bgr2rgb(cls_s), f"7. Constrained Least Squares CLS (Ch. 3.7)\nPSNR: {q_cls['psnr']:.2f} dB | SSIM: {q_cls['ssim']:.3f}", None),
+        (bgr2rgb(inv_s), f"6. Direct Inverse Filter\nPSNR: {q_inv['psnr']:.2f} dB | SSIM: {q_inv['ssim']:.3f}", None),
+        (bgr2rgb(cls_s), f"7. Constrained Least Squares (CLS)\nPSNR: {q_cls['psnr']:.2f} dB | SSIM: {q_cls['ssim']:.3f}", None),
         (bgr2rgb(rest_s), f"8. Proposed Hybrid Wiener+CLS+Highboost\nPSNR: {q_prop['psnr']:.2f} dB | SSIM: {q_prop['ssim']:.3f}", None),
     ]
     for ax, (im, title, cmap) in zip(axes.flat, panels_f1):
@@ -263,7 +263,7 @@ def run_all_experiments():
     plt.savefig("outputs/fig01_module1_restoration.png")
     plt.close(fig)
 
-    # --- Generate Figure 9 (NEW): Multi-Degradation Gallery & Frequency Notch Reject (Ch. 3.2 - 3.3) ---
+    # --- Generate Figure 9: Multi-Degradation Gallery & Frequency Notch Reject ---
     g_awgn_s, _ = synthesize_degradation_by_type(sample_img, "awgn", seed=42)
     r_awgn_s, _ = restore_by_degradation_type(g_awgn_s, "awgn")
     g_sp_s, _ = synthesize_degradation_by_type(sample_img, "salt_pepper", seed=42)
@@ -275,23 +275,23 @@ def run_all_experiments():
 
     fig, axes = plt.subplots(2, 5, figsize=(20, 8.2), dpi=180)
     fig.suptitle(
-        "Chapter 3.2 & 3.3: Multi-Noise Degradation Models & Dedicated Spatial/Frequency Restoration Filters (6x Dataset Expansion)",
+        "Multi-Noise Degradation Models & Dedicated Spatial/Frequency Restoration Filters (6x Dataset Expansion)",
         fontsize=13,
         fontweight="bold",
         y=0.98,
     )
     row0 = [
-        (bgr2rgb(g_awgn_s), f"AWGN (sigma=10, Ch. 3.2)\nPSNR: {evaluate_quality(sample_img, g_awgn_s)['psnr']:.2f} dB", None),
-        (bgr2rgb(g_sp_s), f"Salt & Pepper (4%, Ch. 3.2)\nPSNR: {evaluate_quality(sample_img, g_sp_s)['psnr']:.2f} dB", None),
-        (bgr2rgb(g_ray_s), f"Rayleigh Skew Noise (Ch. 3.2)\nPSNR: {evaluate_quality(sample_img, g_ray_s)['psnr']:.2f} dB", None),
-        (bgr2rgb(g_per_s), f"Periodic Interference (Ch. 3.3)\nPSNR: {evaluate_quality(sample_img, g_per_s)['psnr']:.2f} dB", None),
-        (per_stages["spec_before"], "2D FFT Spectrum w/ Periodic Spikes\nlog(1 + |G(u,v)|) (Ch. 3.3 P18)", "inferno"),
+        (bgr2rgb(g_awgn_s), f"AWGN (sigma=10)\nPSNR: {evaluate_quality(sample_img, g_awgn_s)['psnr']:.2f} dB", None),
+        (bgr2rgb(g_sp_s), f"Salt & Pepper Noise (4%)\nPSNR: {evaluate_quality(sample_img, g_sp_s)['psnr']:.2f} dB", None),
+        (bgr2rgb(g_ray_s), f"Rayleigh Skew Noise\nPSNR: {evaluate_quality(sample_img, g_ray_s)['psnr']:.2f} dB", None),
+        (bgr2rgb(g_per_s), f"Periodic Interference\nPSNR: {evaluate_quality(sample_img, g_per_s)['psnr']:.2f} dB", None),
+        (per_stages["spec_before"], "2D FFT Spectrum w/ Periodic Spikes\nlog(1 + |G(u,v)|)", "inferno"),
     ]
     row1 = [
         (bgr2rgb(r_awgn_s), f"Wavelet DWT + Highboost\nPSNR: {evaluate_quality(sample_img, r_awgn_s)['psnr']:.2f} dB", None),
-        (bgr2rgb(r_sp_s), f"Weighted Median Filter (Ch. 2.2)\nPSNR: {evaluate_quality(sample_img, r_sp_s)['psnr']:.2f} dB", None),
-        (bgr2rgb(r_ray_s), f"Harmonic Mean Filter (Ch. 3.3)\nPSNR: {evaluate_quality(sample_img, r_ray_s)['psnr']:.2f} dB", None),
-        (bgr2rgb(r_per_s), f"Butterworth Notch Reject (Ch. 3.3)\nPSNR: {evaluate_quality(sample_img, r_per_s)['psnr']:.2f} dB", None),
+        (bgr2rgb(r_sp_s), f"3x3 Center-Weighted Median\nPSNR: {evaluate_quality(sample_img, r_sp_s)['psnr']:.2f} dB", None),
+        (bgr2rgb(r_ray_s), f"Harmonic Mean Filter\nPSNR: {evaluate_quality(sample_img, r_ray_s)['psnr']:.2f} dB", None),
+        (bgr2rgb(r_per_s), f"Butterworth Notch Reject Filter\nPSNR: {evaluate_quality(sample_img, r_per_s)['psnr']:.2f} dB", None),
         (per_stages["spec_after"], "Notch-Filtered 2D FFT Spectrum\nlog(1 + |G(u,v)*H_NR(u,v)|)", "inferno"),
     ]
     for c_i in range(5):
@@ -306,7 +306,7 @@ def run_all_experiments():
     plt.close(fig)
 
     # =========================================================================
-    # [3/8] MODULE 2: PLATE DETECTION & DESKEWING (CHAPTERS 1, 2, 7, 11)
+    # [3/8] MODULE 2: PLATE DETECTION & DESKEWING
     # =========================================================================
     print("[3/8] Running Module 2 Detection & Geometric Deskewing across all 115 images...")
     det_res, det_maps = detect_license_plate(sample_img, return_debug=True)
@@ -320,18 +320,18 @@ def run_all_experiments():
 
     fig, axes = plt.subplots(2, 3, figsize=(16, 9), dpi=180)
     fig.suptitle(
-        "Module 2: Classical Morphological Top-Hat, Sobel Vertical Gradient & Bicubic Deskewing (Chapters 1, 2, 7, 11)",
+        "Stage 2: Morphological Black-Hat, Sobel Vertical Gradient & Bicubic Homography Deskewing",
         fontsize=14,
         fontweight="bold",
         y=0.98,
     )
     panels_f2 = [
         (det_maps["gray"], "1. Grayscale Input & Top-Hat Base", "gray"),
-        (det_maps["blackhat"], "2. Morphological Black-Hat (Ch. 2.2)\n(Dark Strokes on White Plate)", "inferno"),
-        (det_maps["sobelx"], "3. Vertical Sobel |Gx| Energy (Ch. 2.2)", "magma"),
+        (det_maps["blackhat"], "2. Morphological Black-Hat\n(Dark Strokes on White Plate)", "inferno"),
+        (det_maps["sobelx"], "3. Vertical Sobel |Gx| Energy", "magma"),
         (det_maps["morph_closed"], "4. Rectangular Closing + Opening\n(17x11 Merging -> 5x5 Pruning)", "gray"),
-        (bgr2rgb(vis_det), f"5. Detected ROI & MinAreaRect (Ch. 11)\n(bbox={w}x{h}, skew={angle_s:.2f} deg)", None),
-        (bgr2rgb(plate_s), "6. Bicubic Deskewed Plate (160x128)\n(Ch. 1.1 Slide 16 & Ch. 7)", None),
+        (bgr2rgb(vis_det), f"5. Detected ROI & MinAreaRect\n(bbox={w}x{h}, skew={angle_s:.2f} deg)", None),
+        (bgr2rgb(plate_s), "6. Bicubic Deskewed Plate (160x128)\n(Canonical Rectified ROI)", None),
     ]
     for ax, (im, title, cmap) in zip(axes.flat, panels_f2):
         ax.imshow(im, cmap=cmap)
@@ -342,7 +342,7 @@ def run_all_experiments():
     plt.close(fig)
 
     # =========================================================================
-    # [4/8] MODULE 3: OTSU (CH. 1.2) VS. K-MEANS (CH. 9.1) VS. ADAPTIVE & CCL
+    # [4/8] MODULE 3: OTSU VS. K-MEANS VS. ADAPTIVE & CCL
     # =========================================================================
     print("[4/8] Running Module 3 Binarization (Otsu vs. K-Means vs. Adaptive) & 8-Connected Segmentation...")
     char_items_s, seg_dbg_s = segment_characters(plate_s, method="adaptive")
@@ -355,7 +355,7 @@ def run_all_experiments():
 
     fig = plt.figure(figsize=(18, 9.5), dpi=180)
     fig.suptitle(
-        "Module 3: Otsu (Ch. 1.2) vs. K-Means Clustering (Ch. 9.1) vs. Local Adaptive Thresholding & 8-Connected Labeling",
+        "Stage 3: Global Otsu vs. K-Means Clustering vs. Local Adaptive Thresholding & 8-Connected Labeling",
         fontsize=13.5,
         fontweight="bold",
         y=0.98,
@@ -369,18 +369,18 @@ def run_all_experiments():
     ax0.axvline(km_mid, color="#55A868", linestyle=":", linewidth=2, label=f"K-Means mid={km_mid:.1f}")
     ax0_t = ax0.twinx()
     ax0_t.plot(np.arange(256), seg_dbg_s["otsu_sigma_curve"], color="#DD8452", linewidth=2, label="Otsu sigma_B^2(t)")
-    ax0.set_title("1. Otsu Variance & K-Means Centers\n(Ch. 1.2 P21 & Ch. 9.1 P5)", fontsize=10, fontweight="bold")
+    ax0.set_title("1. Otsu Between-Class Variance\n& K-Means Centroids", fontsize=10, fontweight="bold")
     ax0.set_xlabel("Grayscale Intensity [0..255]")
     ax0.legend(loc="upper left", fontsize=7.5)
 
     ax1 = fig.add_subplot(gs[0, 1])
     ax1.imshow(seg_dbg_s["otsu_binary"], cmap="gray")
-    ax1.set_title(f"2. Global Otsu Binary (t*={seg_dbg_s['otsu_t']})\n(Ch. 1.2 Slides 21-22)", fontsize=10, fontweight="bold")
+    ax1.set_title(f"2. Global Otsu Binary (t*={seg_dbg_s['otsu_t']})\n(Maximized Between-Class Variance)", fontsize=10, fontweight="bold")
     ax1.axis("off")
 
     ax2 = fig.add_subplot(gs[0, 2])
     ax2.imshow(seg_dbg_s["kmeans_binary"], cmap="gray")
-    ax2.set_title(f"3. K-Means (K=2) Clustering Binary\n(Ch. 9.1 Slides 5-6, mid={km_mid:.1f})", fontsize=10, fontweight="bold")
+    ax2.set_title(f"3. K-Means (K=2) Clustering Binary\n(Iterative Centroid Midpoint={km_mid:.1f})", fontsize=10, fontweight="bold")
     ax2.axis("off")
 
     ax3 = fig.add_subplot(gs[0, 3])
@@ -390,7 +390,7 @@ def run_all_experiments():
 
     ax4 = fig.add_subplot(gs[1, 0])
     ax4.imshow(bgr2rgb(seg_dbg_s["color_labels_raw"]))
-    ax4.set_title("5. Raw 8-Connected Label Map\n(Ch. 1.2 Slides 25-27, Before Frame Cut)", fontsize=10, fontweight="bold")
+    ax4.set_title("5. Raw 8-Connected Label Map\n(Before Contiguous Border Suppression)", fontsize=10, fontweight="bold")
     ax4.axis("off")
 
     ax5 = fig.add_subplot(gs[1, 1])
@@ -467,7 +467,7 @@ def run_all_experiments():
 
     fig, axes = plt.subplots(2, 3, figsize=(16, 9), dpi=180)
     fig.suptitle(
-        f"Module 4: Classical Transform (Ch. 4: WHT, DCT, DHT) & Structural/Gradient Descriptors (Ch. 10) for Character '{sample_rec['gt_label'][2]}'",
+        f"Stage 4: Transform-Domain (WHT, DCT, DHT) & Structural/Gradient Descriptors for Character '{sample_rec['gt_label'][2]}'",
         fontsize=13,
         fontweight="bold",
         y=0.98,
@@ -477,17 +477,17 @@ def run_all_experiments():
     axes[0, 0].axis("off")
 
     axes[0, 1].imshow(np.log1p(np.abs(wht_map[:16, :16])), cmap="viridis")
-    axes[0, 1].set_title("2. 2D Walsh-Hadamard (WHT, Ch. 4.4)\n(Top-Left Low-Sequency Energy)", fontsize=10.5, fontweight="bold")
+    axes[0, 1].set_title("2. 2D Walsh-Hadamard Transform (WHT)\n(Top-Left Low-Sequency Energy)", fontsize=10.5, fontweight="bold")
 
     axes[0, 2].imshow(np.log1p(np.abs(dct_map[:16, :16])), cmap="plasma")
-    axes[0, 2].set_title("3. 2D Discrete Cosine (DCT, Ch. 4.3)\n& Hartley (DHT, Ch. 4.2) Spectrum", fontsize=10.5, fontweight="bold")
+    axes[0, 2].set_title("3. 2D Discrete Cosine (DCT-II)\n& Discrete Hartley (DHT) Spectrum", fontsize=10.5, fontweight="bold")
 
     axes[1, 0].imshow(hog_vis, cmap="inferno")
-    axes[1, 0].set_title("4. HOG Cell Orientation Rose (Ch. 10)\n(8x8 Cells, 9 Bins, 324-d Vector)", fontsize=10.5, fontweight="bold")
+    axes[1, 0].set_title("4. HOG Cell Orientation Rose\n(8x8 Cells, 9 Bins, 324-d Vector)", fontsize=10.5, fontweight="bold")
     axes[1, 0].axis("off")
 
     axes[1, 1].bar(np.arange(18), hu_vec[:18], color="#55A868", edgecolor="black")
-    axes[1, 1].set_title("5. 7 Hu Moments + Covariance Eccentricity\n+ 8 Fourier Boundary Descriptors (Ch. 10)", fontsize=10, fontweight="bold")
+    axes[1, 1].set_title("5. 7 Hu Moments + Covariance Eccentricity\n+ 8 Fourier Boundary Descriptors", fontsize=10, fontweight="bold")
     axes[1, 1].set_xlabel("Descriptor Index (0..6: Hu, 7..9: Cov, 10..17: Fourier)")
     axes[1, 1].grid(axis="y", alpha=0.3)
 
@@ -580,7 +580,7 @@ def run_all_experiments():
 
     fig, (ax_cm, ax_bar) = plt.subplots(1, 2, figsize=(18, 7.8), dpi=180)
     fig.suptitle(
-        "Module 4 Evaluation: Confusion Matrix & Classical Feature/Classifier Benchmark (Chapters 4, 10, 12)",
+        "Stage 4 Evaluation: Confusion Matrix & Feature/Classifier Benchmark Across 7 Descriptors and 7 Classifiers",
         fontsize=13.5,
         fontweight="bold",
         y=0.98,
@@ -603,22 +603,22 @@ def run_all_experiments():
     width = 0.12
     labels_f = [
         "Hu+Cov+\nFourier",
-        "2D DHT\n(Ch.4.2)",
-        "2D DCT\n(Ch.4.3)",
-        "2D WHT\n(Ch.4.4)",
-        "HOG\n(Ch.10)",
-        "Combined\n+PCA (Ch.10.3)",
+        "2D DHT\n(100-d)",
+        "2D DCT-II\n(100-d)",
+        "2D WHT\n(100-d)",
+        "HOG\n(324-d)",
+        "Combined\n+PCA (80-d)",
         "Combined\n(480-d)",
     ]
     colors_c = ["#937860", "#8C8C8C", "#CCB974", "#64B5CD", "#DD8452", "#55A868", "#4C72B0"]
     clf_Plot_names = [
-        ("min_dist", "Min-Dist (Ch.12.2)"),
-        ("corr", "Correlation (Ch.12.2)"),
-        ("bayes", "Gaussian Bayes (Ch.12.3)"),
+        ("min_dist", "Min-Distance"),
+        ("corr", "Correlation"),
+        ("bayes", "Gaussian Bayes"),
         ("knn", "k-NN (k=3)"),
-        ("mlp", "MLP Net (Ch.12.4)"),
+        ("mlp", "MLP Net"),
         ("rf", "Random Forest"),
-        ("svm", "RBF SVM (Ch.11)"),
+        ("svm", "RBF SVM"),
     ]
     for i, (c_type, c_label) in enumerate(clf_Plot_names):
         accs = [ablation2_results[f][c_type]["accuracy"] for f in feature_modes]
@@ -631,7 +631,7 @@ def run_all_experiments():
     ax_bar.set_xticklabels(labels_f, fontsize=8.5, fontweight="bold")
     ax_bar.set_ylim(55, 104)
     ax_bar.set_ylabel("5-Fold Cross-Validation Accuracy (%)")
-    ax_bar.set_title("Accuracy Across Chapter 4 Transforms, Chapter 10 Features & Chapter 12 Classifiers", fontsize=10.5, fontweight="bold")
+    ax_bar.set_title("Classification Accuracy Across Transform, Structural & Gradient Descriptors", fontsize=10.5, fontweight="bold")
     ax_bar.legend(loc="lower right", fontsize=8, ncol=2)
     ax_bar.grid(axis="y", alpha=0.3)
 
@@ -760,19 +760,19 @@ def run_all_experiments():
     # --- Generate Figure 6: Comprehensive Ablation Studies Dashboard ---
     fig, axes = plt.subplots(1, 3, figsize=(19, 6.2), dpi=180)
     fig.suptitle(
-        "Comprehensive Ablation Studies: Impact of Chapter 3 Restoration, Chapter 1 & 9 Binarization, and Chapter 4/10/12 Recognition",
+        "Comprehensive Ablation Studies: Impact of Image Restoration, Binarization Methods, and 6x Expanded Training",
         fontsize=13,
         fontweight="bold",
         y=0.98,
     )
 
     # Panel 1: End-to-End Plate Recognition Accuracy Across All 6 Degradation Models (Without vs. With Restoration)
-    deg_labels = ["Clean", "AWGN\n(Ch.3.2)", "Salt&Pepper\n(Ch.3.2)", "Rayleigh\n(Ch.3.2)", "Periodic\n(Ch.3.3)", "MotionBlur\n(Ch.3.6-7)"]
+    deg_labels = ["Clean", "AWGN\n(sigma=10)", "Salt&Pepper\n(P=4%)", "Rayleigh\n(Skewed)", "Periodic\n(Sinusoidal)", "MotionBlur\n(L=7, sigma=7)"]
     y_no_rest = [deg_ablation_stats[d]["without_restoration"]["plate_acc"] for d in DEGRADATION_TYPES]
     y_with_rest = [deg_ablation_stats[d]["with_restoration"]["plate_acc"] for d in DEGRADATION_TYPES]
     x1 = np.arange(len(DEGRADATION_TYPES))
     b1 = axes[0].bar(x1 - 0.18, y_no_rest, 0.35, label="Without Restoration (Direct)", color="#C44E52", edgecolor="black")
-    b2 = axes[0].bar(x1 + 0.18, y_with_rest, 0.35, label="With Chapter 3 Restoration", color="#55A868", edgecolor="black")
+    b2 = axes[0].bar(x1 + 0.18, y_with_rest, 0.35, label="With Stage 1 Restoration", color="#55A868", edgecolor="black")
     for b in list(b1) + list(b2):
         h = b.get_height()
         axes[0].text(b.get_x() + b.get_width() / 2, h + 1.0, f"{h:.1f}%", ha="center", va="bottom", fontsize=7.5, fontweight="bold")
@@ -780,7 +780,7 @@ def run_all_experiments():
     axes[0].set_xticklabels(deg_labels, fontsize=8.5, fontweight="bold")
     axes[0].set_ylim(0, 112)
     axes[0].set_ylabel("Exact Full-Plate Recognition Rate (%)")
-    axes[0].set_title("Ablation 1: Impact of Chapter 3 Restoration\nAcross 6 Degradation Scenarios (690 Images)", fontsize=10.5, fontweight="bold")
+    axes[0].set_title("Ablation 1: Impact of Image Restoration\nAcross 6 Degradation Regimes (690 Images)", fontsize=10.5, fontweight="bold")
     axes[0].legend(loc="upper right", fontsize=8.5)
     axes[0].grid(axis="y", alpha=0.3)
 
@@ -789,8 +789,8 @@ def run_all_experiments():
     otsu_rates = [seg_counts["otsu_clean"] / 115 * 100, seg_counts["otsu_shadow"] / 115 * 100]
     km_rates = [seg_counts["kmeans_clean"] / 115 * 100, seg_counts["kmeans_shadow"] / 115 * 100]
     adap_rates = [seg_counts["adaptive_clean"] / 115 * 100, seg_counts["adaptive_shadow"] / 115 * 100]
-    b3 = axes[1].bar(x2 - 0.25, otsu_rates, 0.24, label="Global Otsu (Ch. 1.2)", color="#DD8452", edgecolor="black")
-    b4 = axes[1].bar(x2, km_rates, 0.24, label="K-Means K=2 (Ch. 9.1)", color="#CCB974", edgecolor="black")
+    b3 = axes[1].bar(x2 - 0.25, otsu_rates, 0.24, label="Global Otsu", color="#DD8452", edgecolor="black")
+    b4 = axes[1].bar(x2, km_rates, 0.24, label="K-Means (K=2)", color="#CCB974", edgecolor="black")
     b5 = axes[1].bar(x2 + 0.25, adap_rates, 0.24, label="Local Adaptive (Proposed)", color="#4C72B0", edgecolor="black")
     for b in list(b3) + list(b4) + list(b5):
         h = b.get_height()
@@ -799,13 +799,13 @@ def run_all_experiments():
     axes[1].set_xticklabels(["Original Dataset\n(115 Plates)", "Strong Shadow Gradient\n(Simulated Uneven Light)"], fontweight="bold")
     axes[1].set_ylim(0, 112)
     axes[1].set_ylabel("Exact Character Segmentation Rate (%)")
-    axes[1].set_title("Ablation 3: Otsu (Ch. 1.2) vs. K-Means (Ch. 9.1)\nvs. Local Adaptive Thresholding", fontsize=10.5, fontweight="bold")
+    axes[1].set_title("Ablation 2: Global Otsu vs. K-Means (K=2)\nvs. Local Adaptive Thresholding", fontsize=10.5, fontweight="bold")
     axes[1].legend(loc="lower right", fontsize=8.5)
     axes[1].grid(axis="y", alpha=0.3)
 
     # Panel 3: Train/Val/Test Generalization (Clean-Only Train vs. 6x Multi-Degradation Expanded Train on Held-Out 6x Test Set)
     clf_short = ["min_dist", "corr", "bayes", "knn", "mlp", "svm"]
-    clf_lbls = ["Min-Dist\n(Ch.12.2)", "Corr\n(Ch.12.2)", "Bayes\n(Ch.12.3)", "k-NN\n(k=3)", "MLP\n(Ch.12.4)", "SVM\n(Ch.11.1)"]
+    clf_lbls = ["Min-Dist", "Correlation", "Gaussian\nBayes", "k-NN\n(k=3)", "MLP\nNetwork", "RBF\nSVM"]
     x3 = np.arange(len(clf_short))
     acc_clean_tr = [split_eval_results[c]["clean_trained_test_6x_acc"] for c in clf_short]
     acc_aug_tr = [split_eval_results[c]["aug6x_trained_test_6x_syntax_acc"] for c in clf_short]
@@ -818,7 +818,7 @@ def run_all_experiments():
     axes[2].set_xticklabels(clf_lbls, fontsize=8.5, fontweight="bold")
     axes[2].set_ylim(50, 106)
     axes[2].set_ylabel("Held-Out Test Set Accuracy (%)")
-    axes[2].set_title("Ablation 2: Held-Out Test Split (108 Test Plates)\nClean Training vs. 6x Expanded Training", fontsize=10.5, fontweight="bold")
+    axes[2].set_title("Ablation 3: Held-Out Test Split (108 Test Plates)\nClean Training vs. 6x Expanded Training", fontsize=10.5, fontweight="bold")
     axes[2].legend(loc="lower right", fontsize=8)
     axes[2].grid(axis="y", alpha=0.3)
 
@@ -827,12 +827,12 @@ def run_all_experiments():
     plt.close(fig)
 
     # =========================================================================
-    # [7/8] GENERATE FIGURE 10 (NEW): TRAIN / VAL / TEST SPLIT & 6X EXPANSION OVERVIEW
+    # [7/8] GENERATE FIGURE 10: TRAIN / VAL / TEST SPLIT & 6X EXPANSION OVERVIEW
     # =========================================================================
     print("[7/8] Generating Figure 10 (Train/Val/Test Split & 6x Multi-Degradation Dataset Overview) and End-to-End Demos...")
     fig, (ax_l, ax_r) = plt.subplots(1, 2, figsize=(17, 6.2), dpi=180)
     fig.suptitle(
-        "Dataset Architecture: Plate-Level Train / Validation / Test Split (70/15/15) & 6x Chapter 3 Multi-Degradation Expansion",
+        "Dataset Architecture: Stratified Plate-Level Split (70/15/15) & 6x Multi-Degradation Expansion",
         fontsize=13,
         fontweight="bold",
         y=0.98,
@@ -842,7 +842,7 @@ def run_all_experiments():
     exp_plate_cnts = [len(train_recs) * 6, len(val_recs) * 6, len(test_recs) * 6, len(labeled_records) * 6]
     xs = np.arange(4)
     b_c = ax_l.bar(xs - 0.18, clean_plate_cnts, 0.35, label="Original Clean Plates (1x)", color="#64B5CD", edgecolor="black")
-    b_e = ax_l.bar(xs + 0.18, exp_plate_cnts, 0.35, label="6x Expanded Plates (6 Degradation Models)", color="#4C72B0", edgecolor="black")
+    b_e = ax_l.bar(xs + 0.18, exp_plate_cnts, 0.35, label="6x Expanded Plates (6 Degradation Regimes)", color="#4C72B0", edgecolor="black")
     for b in list(b_c) + list(b_e):
         h = b.get_height()
         ax_l.text(b.get_x() + b.get_width() / 2, h + 10, f"{int(h)}", ha="center", va="bottom", fontsize=9, fontweight="bold")
@@ -854,21 +854,21 @@ def run_all_experiments():
     ax_l.legend(loc="upper left")
     ax_l.grid(axis="y", alpha=0.3)
 
-    # Right panel: PSNR Before vs. After Chapter 3 Restoration across the 5 Non-Clean Degradations
+    # Right panel: PSNR Before vs. After Restoration across the 5 Non-Clean Degradations
     deg_nonclean = ["awgn", "salt_pepper", "rayleigh", "periodic", "motion_blur"]
     deg_nc_labels = ["AWGN\n(sigma=10)", "Salt & Pepper\n(P=4%)", "Rayleigh\n(Skewed)", "Periodic\n(Sinusoidal)", "Motion Blur\n(L=7, sigma=7)"]
     psnr_b = [deg_ablation_stats[d]["psnr_before"] for d in deg_nonclean]
     psnr_a = [deg_ablation_stats[d]["psnr_after"] for d in deg_nonclean]
     xn = np.arange(len(deg_nonclean))
     bn1 = ax_r.bar(xn - 0.18, psnr_b, 0.35, label="Degraded Input PSNR (dB)", color="#C44E52", edgecolor="black")
-    bn2 = ax_r.bar(xn + 0.18, psnr_a, 0.35, label="Restored Output PSNR (dB, Ch. 3)", color="#55A868", edgecolor="black")
+    bn2 = ax_r.bar(xn + 0.18, psnr_a, 0.35, label="Restored Output PSNR (dB)", color="#55A868", edgecolor="black")
     for b in list(bn1) + list(bn2):
         h = b.get_height()
         ax_r.text(b.get_x() + b.get_width() / 2, h + 0.4, f"{h:.2f}", ha="center", va="bottom", fontsize=8.5, fontweight="bold")
     ax_r.set_xticks(xn)
     ax_r.set_xticklabels(deg_nc_labels, fontweight="bold")
     ax_r.set_ylim(15, 38)
-    ax_r.set_ylabel("Peak Signal-to-Noise Ratio - PSNR (dB, Ch. 8)")
+    ax_r.set_ylabel("Peak Signal-to-Noise Ratio - PSNR (dB)")
     ax_r.set_title("PSNR Gain Across All 5 Degraded Conditions (115 Plates Each)", fontsize=11, fontweight="bold")
     ax_r.legend(loc="upper right")
     ax_r.grid(axis="y", alpha=0.3)
